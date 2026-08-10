@@ -1,0 +1,196 @@
+const { GAME_PHASES, SETUP_SUBPHASES } = require("./GameConstants");
+
+class Game {
+    constructor(board) {
+        this.board = board;
+
+        this.players = new Map();
+        this.currentPlayerId = null;
+
+        this.phase = GAME_PHASES.SETUP;
+        this.subphase = SETUP_SUBPHASES.PLACING_SETTLEMENT;
+        this.setupSettlementVertexId = null;
+    }
+
+    addPlayer(player) {
+        this.players.set(player.id, player);
+    }
+
+    canBuildRoad(edgeId) {
+        const edge = this.board.edges.get(edgeId);
+
+        if (!edge) {
+            return false;
+        }
+
+        // Edge must be empty
+        if (edge.road) {
+            return false;
+        }
+
+        const currentPlayerId = this.currentPlayerId;
+
+        // Check both vertices connected to this edge
+        for (const vertexId of edge.vertices) {
+            const vertex = this.board.vertices.get(vertexId);
+
+            // Player has a building on this vertex
+            if (
+                vertex.building &&
+                vertex.building.playerId === currentPlayerId
+            ) {
+                return true;
+            }
+
+            // Player has a road connected to this vertex
+            for (const adjacentEdgeId of vertex.adjacentEdges) {
+                const adjacentEdge =
+                    this.board.edges.get(adjacentEdgeId);
+
+                if (
+                    adjacentEdge &&
+                    adjacentEdge.road &&
+                    adjacentEdge.road.playerId === currentPlayerId
+                ) {
+                    return true;
+                }
+            }
+
+            // TODO: blocking logic
+        }
+
+        return false;
+    }
+
+    canBuildSetupRoad(edgeId) {
+        const edge = this.board.edges.get(edgeId);
+
+        if (!edge) {
+            return false;
+        }
+
+        // Edge must be empty
+        if (edge.road) {
+            return false;
+        }
+
+        // Must have just placed a settlement
+        if (!this.setupSettlementVertexId) {
+            return false;
+        }
+
+        // Road must connect directly to the setup settlement
+        return edge.vertices.includes(this.setupSettlementVertexId);
+    }
+
+    getBuildableRoads() {
+        const buildableRoads = [];
+
+        for (const edge of this.board.edges.values()) {
+            if (this.phase === GAME_PHASES.SETUP) {
+                if (this.canBuildSetupRoad(edge.id)) {
+                    buildableRoads.push(edge.id);
+                }
+            } else {
+                if (this.canBuildRoad(edge.id)) {
+                    buildableRoads.push(edge.id);
+                }
+            }
+        }
+
+        return buildableRoads;
+    }
+
+    placeRoad(edgeId) {
+        const edge = this.board.edges.get(edgeId);
+
+        if (!edge) {
+            return false;
+        }
+
+        const canBuild =
+            this.phase === GAME_PHASES.SETUP
+                ? this.canBuildSetupRoad(edgeId)
+                : this.canBuildRoad(edgeId);
+
+        if (!canBuild) {
+            return false;
+        }
+
+        edge.road = {
+            playerId: this.currentPlayerId
+        };
+
+        if (this.phase === GAME_PHASES.SETUP) {
+            this.setupSettlementVertexId = null;
+            this.subphase = SETUP_SUBPHASES.PLACING_SETTLEMENT;
+        }
+
+        return true;
+    }
+
+    canBuildSettlement(vertexId) {
+        const vertex = this.board.vertices.get(vertexId);
+
+        if (!vertex) {
+            return false;
+        }
+
+        // Vertex must be empty
+        if (vertex.building) {
+            return false;
+        }
+
+        // Setup phase: any empty vertex is currently allowed.
+        if (this.phase === GAME_PHASES.SETUP) {
+            for (const adjacentVertexId of vertex.adjacentVertices) {
+                const adjacentVertex =
+                    this.board.vertices.get(adjacentVertexId);
+
+                if (adjacentVertex.building) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // TODO: Gameplay rules
+
+        return false;
+    }
+
+    getBuildableSettlements() {
+        const buildableSettlements = [];
+
+        for (const vertex of this.board.vertices.values()) {
+            if (this.canBuildSettlement(vertex.id)) {
+                buildableSettlements.push(vertex.id);
+            }
+        }
+
+        return buildableSettlements;
+    }
+
+    placeSettlement(vertexId) {
+        const vertex = this.board.vertices.get(vertexId);
+
+        if (!this.canBuildSettlement(vertexId)) {
+            return false;
+        }
+
+        vertex.building = {
+            type: "settlement",
+            playerId: this.currentPlayerId
+        };
+
+        if (this.phase === GAME_PHASES.SETUP) {
+            this.setupSettlementVertexId = vertexId;
+            this.subphase = SETUP_SUBPHASES.PLACING_ROAD;
+        }
+
+        return true;
+    }
+}
+
+module.exports = Game;
