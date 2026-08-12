@@ -1,4 +1,10 @@
-const { GAME_PHASES, SETUP_SUBPHASES } = require("./GameConstants");
+const {
+    GAME_PHASES,
+    SETUP_SUBPHASES,
+    GAMEPLAY_SUBPHASES
+} = require("./GameConstants");
+
+const SetupManager = require("./SetupManager");
 
 class Game {
     constructor(board) {
@@ -6,14 +12,49 @@ class Game {
 
         this.players = new Map();
         this.currentPlayerId = null;
+        this.diceRoll = null;
 
-        this.phase = GAME_PHASES.SETUP;
-        this.subphase = SETUP_SUBPHASES.PLACING_SETTLEMENT;
+        this.phase = GAME_PHASES.LOBBY;
+        this.subphase = SETUP_SUBPHASES.ROLL_FOR_TURN_ORDER;
         this.setupSettlementVertexId = null;
+
+        this.colors = [
+            "red",
+            "blue",
+            "green",
+            "orange",
+            "purple",
+            "yellow"
+        ];
+
+        this.turnOrderRolls = new Map();
+        this.setupTurnOrder = [];
+        this.setupTurnIndex = 0;
+
+        this.setup = new SetupManager(this);
     }
 
     addPlayer(player) {
         this.players.set(player.id, player);
+    }
+
+    rollProductionDice() {
+        if (this.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (this.subphase !== GAMEPLAY_SUBPHASES.PRODUCTION) {
+            return false;
+        }
+
+        const roll1 = Math.floor(Math.random() * 6) + 1;
+        const roll2 = Math.floor(Math.random() * 6) + 1;
+
+        this.diceRoll = [roll1, roll2];
+
+        this.subphase = GAMEPLAY_SUBPHASES.ACTION;
+
+        return true;
     }
 
     canBuildRoad(edgeId) {
@@ -123,7 +164,7 @@ class Game {
 
         if (this.phase === GAME_PHASES.SETUP) {
             this.setupSettlementVertexId = null;
-            this.subphase = SETUP_SUBPHASES.PLACING_SETTLEMENT;
+            this.setup.advanceTurn();
         }
 
         return true;
@@ -191,6 +232,37 @@ class Game {
 
         return true;
     }
+
+    endTurn() {
+        if (this.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (this.subphase !== GAMEPLAY_SUBPHASES.ACTION) {
+            return false;
+        }
+
+        const playerCount = this.players.size;
+        const setupOrderLength = this.setupTurnOrder.length;
+
+        const forwardOrder =
+            this.setupTurnOrder.slice(
+                0,
+                setupOrderLength / 2
+            );
+
+        const currentIndex = forwardOrder.indexOf(this.currentPlayerId);
+
+        const nextIndex = (currentIndex + 1) % playerCount;
+
+        this.currentPlayerId = forwardOrder[nextIndex];
+
+        this.diceRoll = null;
+        this.subphase = GAMEPLAY_SUBPHASES.PRODUCTION;
+
+        return true;
+    }
+
 }
 
 module.exports = Game;

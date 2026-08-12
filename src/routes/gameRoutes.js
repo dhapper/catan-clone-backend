@@ -2,7 +2,7 @@ const express = require("express");
 
 const router = express.Router();
 
-function createGameRoutes(game) {
+function createGameRoutes(game, io) {
     router.get("/game", (req, res) => {
         res.json({
             rowSizes: game.board.rowSizes,
@@ -37,6 +37,16 @@ function createGameRoutes(game) {
             });
         }
 
+        io.emit("game:state", {
+            players: [...game.players.values()],
+            colors: game.colors,
+            phase: game.phase,
+            subphase: game.subphase,
+            currentPlayerId: game.currentPlayerId,
+            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
+            setupTurnOrder: game.setupTurnOrder
+        });
+
         res.json({
             success: true,
             vertex
@@ -59,6 +69,16 @@ function createGameRoutes(game) {
                 error: "Road cannot be built here"
             });
         }
+
+        io.emit("game:state", {
+            players: [...game.players.values()],
+            colors: game.colors,
+            phase: game.phase,
+            subphase: game.subphase,
+            currentPlayerId: game.currentPlayerId,
+            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
+            setupTurnOrder: game.setupTurnOrder
+        });
 
         res.json({
             success: true,

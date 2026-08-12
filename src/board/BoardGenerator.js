@@ -2,12 +2,42 @@ const Board = require("./Board");
 const Tile = require("./Tile");
 const Vertex = require("./Vertex");
 const Edge = require("./Edge");
+const {
+    TILE_TYPES,
+    ALL_TILES
+} = require("../game/TileTypes");
+const { ALL_TOKENS } = require("../game/NumberTokens");
 
 const HEX_SIZE = 60;
+
+function shuffle(array) {
+    const shuffled = [...array];
+
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [shuffled[i], shuffled[j]] =
+            [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled;
+}
 
 function generateBoard(rowSizes) {
     const board = new Board(rowSizes);
     board.hexSize = HEX_SIZE;
+
+    const tileCount =
+        rowSizes.reduce(
+            (total, rowSize) => total + rowSize,
+            0
+        );
+
+    const tileTypes =
+        shuffle(ALL_TILES.slice(0, tileCount));
+
+    const numberTokens =
+        shuffle(ALL_TOKENS.slice(0, tileCount));
 
     let tileId = 0;
     let vertexId = 0;
@@ -41,12 +71,31 @@ function generateBoard(rowSizes) {
             const y =
                 row * (1.5 * HEX_SIZE);
 
+            const tileType = tileTypes[tileId];
+
+            const tileTypeInfo =
+                TILE_TYPES.find(
+                    tile => tile.type === tileType
+                );
+
+            const resource =
+                tileTypeInfo?.resource ?? null;
+
+            let numberToken = null;
+
+            if (tileType !== "desert") {
+                numberToken = numberTokens.shift();
+            }
+
             const tile = new Tile(
                 `t${tileId}`,
                 row,
                 column,
                 x,
-                y
+                y,
+                tileType,
+                resource,
+                numberToken
             );
 
             // Generate the six vertices of this hex
