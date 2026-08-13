@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 
 const board = generateBoard([
-    5, 4, 3, 2, 3, 4, 5, 4, 3
+    3, 4, 5, 4, 3
 ]);
 
 const game = new Game(board);

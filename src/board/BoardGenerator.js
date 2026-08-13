@@ -5,10 +5,10 @@ const Edge = require("./Edge");
 const {
     TILE_TYPES,
     ALL_TILES
-} = require("../game/TileTypes");
-const { ALL_TOKENS } = require("../game/NumberTokens");
+} = require("../constants/TileTypes");
+const { ALL_TOKENS } = require("../constants/NumberTokens");
 
-const HEX_SIZE = 60;
+const HEX_SIZE = 120;
 
 function shuffle(array) {
     const shuffled = [...array];

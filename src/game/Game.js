@@ -1,16 +1,15 @@
-const {
-    GAME_PHASES,
-    SETUP_SUBPHASES,
-    GAMEPLAY_SUBPHASES
-} = require("./GameConstants");
+const { GAME_PHASES, SETUP_SUBPHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
+const { STRUCTURE_TYPES, BUILDING_PRODUCTION, BUILD_COSTS } = require("../constants/BuildingConstants");
 
 const SetupManager = require("./SetupManager");
+const Bank = require("./Bank");
 
 class Game {
     constructor(board) {
         this.board = board;
 
         this.players = new Map();
+        this.bank = new Bank();
         this.currentPlayerId = null;
         this.diceRoll = null;
 
@@ -52,6 +51,71 @@ class Game {
 
         this.diceRoll = [roll1, roll2];
 
+        const total = roll1 + roll2;
+
+        // Map each resource to all players who should receive it.
+        const production = new Map();
+
+        for (const tile of this.board.tiles.values()) {
+            if (tile.numberToken !== total) {
+                continue;
+            }
+
+            if (!tile.resource) {
+                continue;
+            }
+
+            if (!production.has(tile.resource)) {
+                production.set(tile.resource, []);
+            }
+
+            for (const vertexId of tile.vertices) {
+                const vertex = this.board.vertices.get(vertexId);
+
+                if (!vertex || !vertex.building) {
+                    continue;
+                }
+
+                const amount =
+                    BUILDING_PRODUCTION[vertex.building.type];
+
+                if (!amount) {
+                    continue;
+                }
+
+                production
+                    .get(tile.resource)
+                    .push({
+                        playerId: vertex.building.playerId,
+                        amount
+                    });
+            }
+        }
+
+        // Process each resource independently.
+        for (const [resource, playerProductions] of production) {
+            const totalDemand = playerProductions.reduce(
+                (total, production) =>
+                    total + production.amount,
+                0
+            );
+
+            // Catan rule:
+            // If the bank cannot provide the entire amount,
+            // nobody receives this resource.
+            if (this.bank.resources[resource] < totalDemand) {
+                continue;
+            }
+
+            for (const production of playerProductions) {
+                this.giveResourceToPlayer(
+                    production.playerId,
+                    resource,
+                    production.amount
+                );
+            }
+        }
+
         this.subphase = GAMEPLAY_SUBPHASES.ACTION;
 
         return true;
@@ -75,7 +139,7 @@ class Game {
         for (const vertexId of edge.vertices) {
             const vertex = this.board.vertices.get(vertexId);
 
-            // Player has a building on this vertex
+            // Your own building connects your road network.
             if (
                 vertex.building &&
                 vertex.building.playerId === currentPlayerId
@@ -83,7 +147,17 @@ class Game {
                 return true;
             }
 
-            // Player has a road connected to this vertex
+            // An opponent's building blocks your road network
+            // from continuing through this vertex.
+            if (
+                vertex.building &&
+                vertex.building.playerId !== currentPlayerId
+            ) {
+                continue;
+            }
+
+            // No building here, so check for one of your
+            // connected roads.
             for (const adjacentEdgeId of vertex.adjacentEdges) {
                 const adjacentEdge =
                     this.board.edges.get(adjacentEdgeId);
@@ -96,8 +170,6 @@ class Game {
                     return true;
                 }
             }
-
-            // TODO: blocking logic
         }
 
         return false;
@@ -158,6 +230,21 @@ class Game {
             return false;
         }
 
+        // Roads are free during setup.
+        if (this.phase !== GAME_PHASES.SETUP) {
+            if (!this.canAfford(
+                this.currentPlayerId,
+                BUILD_COSTS.road
+            )) {
+                return false;
+            }
+
+            this.payCost(
+                this.currentPlayerId,
+                BUILD_COSTS.road
+            );
+        }
+
         edge.road = {
             playerId: this.currentPlayerId
         };
@@ -182,21 +269,42 @@ class Game {
             return false;
         }
 
-        // Setup phase: any empty vertex is currently allowed.
-        if (this.phase === GAME_PHASES.SETUP) {
-            for (const adjacentVertexId of vertex.adjacentVertices) {
-                const adjacentVertex =
-                    this.board.vertices.get(adjacentVertexId);
+        // No adjacent building allowed
+        for (const adjacentVertexId of vertex.adjacentVertices) {
+            const adjacentVertex =
+                this.board.vertices.get(adjacentVertexId);
 
-                if (adjacentVertex.building) {
-                    return false;
-                }
+            if (adjacentVertex?.building) {
+                return false;
             }
+        }
 
+        // Setup phase
+        if (this.phase === GAME_PHASES.SETUP) {
             return true;
         }
 
-        // TODO: Gameplay rules
+        // Gameplay phase
+        if (this.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (this.subphase !== GAMEPLAY_SUBPHASES.ACTION) {
+            return false;
+        }
+
+        // Settlement must connect to one of the current player's roads
+        for (const edgeId of vertex.adjacentEdges) {
+            const edge = this.board.edges.get(edgeId);
+
+            if (
+                edge &&
+                edge.road &&
+                edge.road.playerId === this.currentPlayerId
+            ) {
+                return true;
+            }
+        }
 
         return false;
     }
@@ -220,8 +328,23 @@ class Game {
             return false;
         }
 
+        // Settlements are free during setup.
+        if (this.phase !== GAME_PHASES.SETUP) {
+            if (!this.canAfford(
+                this.currentPlayerId,
+                BUILD_COSTS[STRUCTURE_TYPES.SETTLEMENT]
+            )) {
+                return false;
+            }
+
+            this.payCost(
+                this.currentPlayerId,
+                BUILD_COSTS[STRUCTURE_TYPES.SETTLEMENT]
+            );
+        }
+
         vertex.building = {
-            type: "settlement",
+            type: STRUCTURE_TYPES.SETTLEMENT,
             playerId: this.currentPlayerId
         };
 
@@ -229,6 +352,80 @@ class Game {
             this.setupSettlementVertexId = vertexId;
             this.subphase = SETUP_SUBPHASES.PLACING_ROAD;
         }
+
+        return true;
+    }
+
+    canBuildCity(vertexId) {
+        const vertex = this.board.vertices.get(vertexId);
+
+        if (!vertex) {
+            return false;
+        }
+
+        // A city must replace an existing settlement.
+        if (!vertex.building) {
+            return false;
+        }
+
+        // The settlement must belong to the current player.
+        if (vertex.building.playerId !== this.currentPlayerId) {
+            return false;
+        }
+
+        // The existing building must be a settlement.
+        if (vertex.building.type !== STRUCTURE_TYPES.SETTLEMENT) {
+            return false;
+        }
+
+        // Cities can only be built during gameplay.
+        if (this.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        // Cities can only be built during the action subphase.
+        if (this.subphase !== GAMEPLAY_SUBPHASES.ACTION) {
+            return false;
+        }
+
+        return true;
+    }
+
+    getBuildableCities() {
+        const buildableCities = [];
+
+        for (const vertex of this.board.vertices.values()) {
+            if (this.canBuildCity(vertex.id)) {
+                buildableCities.push(vertex.id);
+            }
+        }
+
+        return buildableCities;
+    }
+
+    placeCity(vertexId) {
+        const vertex = this.board.vertices.get(vertexId);
+
+        if (!this.canBuildCity(vertexId)) {
+            return false;
+        }
+
+        if (!this.canAfford(
+            this.currentPlayerId,
+            BUILD_COSTS[STRUCTURE_TYPES.CITY]
+        )) {
+            return false;
+        }
+
+        this.payCost(
+            this.currentPlayerId,
+            BUILD_COSTS[STRUCTURE_TYPES.CITY]
+        );
+
+        vertex.building = {
+            type: STRUCTURE_TYPES.CITY,
+            playerId: this.currentPlayerId
+        };
 
         return true;
     }
@@ -251,9 +448,11 @@ class Game {
                 setupOrderLength / 2
             );
 
-        const currentIndex = forwardOrder.indexOf(this.currentPlayerId);
+        const currentIndex =
+            forwardOrder.indexOf(this.currentPlayerId);
 
-        const nextIndex = (currentIndex + 1) % playerCount;
+        const nextIndex =
+            (currentIndex + 1) % playerCount;
 
         this.currentPlayerId = forwardOrder[nextIndex];
 
@@ -263,6 +462,118 @@ class Game {
         return true;
     }
 
+    giveResourceToPlayer(playerId, resource, amount) {
+        const player = this.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        if (!Number.isInteger(amount) || amount <= 0) {
+            return false;
+        }
+
+        if (!(resource in player.resources)) {
+            return false;
+        }
+
+        if (this.bank.resources[resource] < amount) {
+            return false;
+        }
+
+        this.bank.removeResource(resource, amount);
+        player.addResource(resource, amount);
+
+        return true;
+    }
+
+    returnResourceToBank(playerId, resource, amount) {
+        const player = this.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        if (!Number.isInteger(amount) || amount <= 0) {
+            return false;
+        }
+
+        if (!(resource in player.resources)) {
+            return false;
+        }
+
+        if (player.resources[resource] < amount) {
+            return false;
+        }
+
+        player.removeResource(resource, amount);
+        this.bank.addResource(resource, amount);
+
+        return true;
+    }
+
+    canAfford(playerId, cost) {
+        const player = this.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        for (const [resource, amount] of Object.entries(cost)) {
+            if (!(resource in player.resources)) {
+                return false;
+            }
+
+            if (player.resources[resource] < amount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    payCost(playerId, cost) {
+        const player = this.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        if (!this.canAfford(playerId, cost)) {
+            return false;
+        }
+
+        for (const [resource, amount] of Object.entries(cost)) {
+            player.removeResource(resource, amount);
+            this.bank.addResource(resource, amount);
+        }
+
+        return true;
+    }
+
+    getBuildAvailability(playerId) {
+        return {
+            road: this.canAfford(
+                playerId,
+                BUILD_COSTS[STRUCTURE_TYPES.ROAD]
+            ),
+
+            settlement: this.canAfford(
+                playerId,
+                BUILD_COSTS[STRUCTURE_TYPES.SETTLEMENT]
+            ),
+
+            city: this.canAfford(
+                playerId,
+                BUILD_COSTS[STRUCTURE_TYPES.CITY]
+            ),
+
+            developmentCard: this.canAfford(
+                playerId,
+                BUILD_COSTS[STRUCTURE_TYPES.DEVELOPMENT_CARD]
+            )
+        };
+    }
 }
 
 module.exports = Game;

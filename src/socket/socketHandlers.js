@@ -2,7 +2,7 @@ const Player = require("../game/Player");
 const {
     GAME_PHASES,
     SETUP_SUBPHASES
-} = require("../game/GameConstants");
+} = require("../constants/GameConstants");
 
 function registerSocketHandlers(io, game) {
     function broadcastGameState() {
@@ -14,7 +14,9 @@ function registerSocketHandlers(io, game) {
             currentPlayerId: game.currentPlayerId,
             diceRoll: game.diceRoll,
             turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder
+            setupTurnOrder: game.setupTurnOrder,
+            bank: game.bank.resources,
+            buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null
         });
     }
 

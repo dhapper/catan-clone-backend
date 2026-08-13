@@ -3,6 +3,23 @@ const express = require("express");
 const router = express.Router();
 
 function createGameRoutes(game, io) {
+    function broadcastGameState() {
+        io.emit("game:state", {
+            players: [...game.players.values()],
+            colors: game.colors,
+            phase: game.phase,
+            subphase: game.subphase,
+            currentPlayerId: game.currentPlayerId,
+            diceRoll: game.diceRoll,
+            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
+            setupTurnOrder: game.setupTurnOrder,
+            bank: game.bank.resources,
+            buildAvailability: game.currentPlayerId
+                ? game.getBuildAvailability(game.currentPlayerId)
+                : null
+        });
+    }
+
     router.get("/game", (req, res) => {
         res.json({
             rowSizes: game.board.rowSizes,
@@ -13,7 +30,7 @@ function createGameRoutes(game, io) {
             currentPlayerId: game.currentPlayerId,
             buildableRoads: game.getBuildableRoads(),
             buildableSettlements: game.getBuildableSettlements(),
-
+            buildableCities: game.getBuildableCities(),
             tiles: [...game.board.tiles.values()],
             vertices: [...game.board.vertices.values()],
             edges: [...game.board.edges.values()],
@@ -37,15 +54,7 @@ function createGameRoutes(game, io) {
             });
         }
 
-        io.emit("game:state", {
-            players: [...game.players.values()],
-            colors: game.colors,
-            phase: game.phase,
-            subphase: game.subphase,
-            currentPlayerId: game.currentPlayerId,
-            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder
-        });
+        broadcastGameState();
 
         res.json({
             success: true,
@@ -70,19 +79,36 @@ function createGameRoutes(game, io) {
             });
         }
 
-        io.emit("game:state", {
-            players: [...game.players.values()],
-            colors: game.colors,
-            phase: game.phase,
-            subphase: game.subphase,
-            currentPlayerId: game.currentPlayerId,
-            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder
-        });
+        broadcastGameState();
 
         res.json({
             success: true,
             edge
+        });
+    });
+
+    router.post("/game/build/city", (req, res) => {
+        const { vertexId } = req.body;
+
+        const vertex = game.board.vertices.get(vertexId);
+
+        if (!vertex) {
+            return res.status(404).json({
+                error: "Vertex not found"
+            });
+        }
+
+        if (!game.placeCity(vertexId)) {
+            return res.status(400).json({
+                error: "City cannot be built here"
+            });
+        }
+
+        broadcastGameState();
+
+        res.json({
+            success: true,
+            vertex
         });
     });
 

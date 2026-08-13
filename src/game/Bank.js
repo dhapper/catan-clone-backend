@@ -1,17 +1,11 @@
-class Player {
-    constructor(id, name, color, isHost) {
-        this.id = id;
-        this.name = name;
-        this.color = color;
-        this.isHost = isHost;
-        this.connected = false;
-
+class Bank {
+    constructor() {
         this.resources = {
-            wood: 10,
-            brick: 10,
-            wheat: 10,
-            sheep: 10,
-            ore: 10
+            wood: 19,
+            brick: 19,
+            wheat: 19,
+            sheep: 19,
+            ore: 19
         };
     }
 
@@ -40,4 +34,4 @@ class Player {
     }
 }
 
-module.exports = Player;
+module.exports = Bank;

@@ -2,7 +2,7 @@ const {
     GAME_PHASES,
     SETUP_SUBPHASES,
     GAMEPLAY_SUBPHASES
-} = require("./GameConstants");
+} = require("../constants/GameConstants");
 
 class SetupManager {
     constructor(game) {
