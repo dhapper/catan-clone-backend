@@ -16,7 +16,8 @@ function createGameRoutes(game, io) {
             bank: game.bank.resources,
             buildAvailability: game.currentPlayerId
                 ? game.getBuildAvailability(game.currentPlayerId)
-                : null
+                : null,
+            ports: game.board.ports,
         });
     }
 
@@ -34,6 +35,7 @@ function createGameRoutes(game, io) {
             tiles: [...game.board.tiles.values()],
             vertices: [...game.board.vertices.values()],
             edges: [...game.board.edges.values()],
+            ports: game.board.ports,
         });
     });
 

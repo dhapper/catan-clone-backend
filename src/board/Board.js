@@ -5,7 +5,7 @@ class Board {
         this.tiles = new Map();
         this.vertices = new Map();
         this.edges = new Map();
-        
+        this.ports = [];
     }
 
     addTile(tile) {

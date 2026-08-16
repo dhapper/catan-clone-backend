@@ -11,6 +11,7 @@ function registerSocketHandlers(io, game) {
             colors: game.colors,
             phase: game.phase,
             subphase: game.subphase,
+            currentTrade: game.currentTrade,
             currentPlayerId: game.currentPlayerId,
             diceRoll: game.diceRoll,
             turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
@@ -225,6 +226,126 @@ function registerSocketHandlers(io, game) {
             if (!game.endTurn()) {
                 return;
             }
+
+            broadcastGameState();
+        });
+
+        socket.on("game:bankTrade", ({ offered, wanted }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.bankTrade(offered, wanted)) {
+                return;
+            }
+
+            broadcastGameState();
+        });
+
+        socket.on("game:createTrade", ({ offered, wanted }) => {
+            console.log("CREATE TRADE RECEIVED:", offered, wanted);
+
+            if (!socket.playerId) {
+                console.log("1");
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                console.log("2");
+                return;
+            }
+
+            if (!game.createTrade(offered, wanted)) {
+                console.log("3");
+                return;
+            }
+
+            console.log("CREATE TRADE SUCCESS:", game.currentTrade);
+
+            broadcastGameState();
+        });
+
+        socket.on("game:acceptTrade", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (!game.acceptTrade(socket.playerId)) {
+                console.log("TRADE ACCEPT REJECTED");
+                return;
+            }
+
+            console.log(
+                "TRADE ACCEPTED:",
+                socket.playerId
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:declineTrade", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (!game.declineTrade(socket.playerId)) {
+                console.log("TRADE DECLINE REJECTED");
+                return;
+            }
+
+            console.log(
+                "TRADE DECLINED:",
+                socket.playerId
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:resolveTrade", ({ playerId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            // Only the player who created the trade
+            // can choose which accepted player to trade with.
+            if (game.currentTrade?.playerId !== socket.playerId) {
+                console.log("TRADE RESOLUTION REJECTED");
+                return;
+            }
+
+            const success = game.resolveTrade(playerId);
+
+            if (!success) {
+                console.log("TRADE RESOLUTION FAILED");
+                return;
+            }
+
+            console.log(
+                "TRADE RESOLVED WITH:",
+                playerId
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:cancelTrade", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (!game.cancelTrade(socket.playerId)) {
+                console.log("TRADE CANCEL REJECTED");
+                return;
+            }
+
+            console.log(
+                "TRADE CANCELLED:",
+                socket.playerId
+            );
 
             broadcastGameState();
         });

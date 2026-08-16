@@ -7,8 +7,14 @@ const {
     ALL_TILES
 } = require("../constants/TileTypes");
 const { ALL_TOKENS } = require("../constants/NumberTokens");
+const DEFAULT_PORTS = require("../constants/PortConstants");
 
 const HEX_SIZE = 120;
+const PORT_SPACING = 4;
+
+function getPortCount(borderEdgeCount) {
+    return Math.floor(borderEdgeCount / PORT_SPACING);
+}
 
 function shuffle(array) {
     const shuffled = [...array];
@@ -176,6 +182,100 @@ function generateBoard(rowSizes) {
             tileId++;
         }
     }
+
+    // port stuff
+
+    const borderEdges = [...board.edges.values()].filter(
+        edge => edge.adjacentTiles.length === 1
+    );
+
+    const portCount = getPortCount(borderEdges.length);
+
+    const centerX =
+        borderEdges.reduce(
+            (sum, edge) =>
+                sum +
+                (
+                    board.vertices.get(edge.vertices[0]).x +
+                    board.vertices.get(edge.vertices[1]).x
+                ) / 2,
+            0
+        ) / borderEdges.length;
+
+    const centerY =
+        borderEdges.reduce(
+            (sum, edge) =>
+                sum +
+                (
+                    board.vertices.get(edge.vertices[0]).y +
+                    board.vertices.get(edge.vertices[1]).y
+                ) / 2,
+            0
+        ) / borderEdges.length;
+
+    borderEdges.sort((a, b) => {
+        const aVertexA = board.vertices.get(a.vertices[0]);
+        const aVertexB = board.vertices.get(a.vertices[1]);
+
+        const bVertexA = board.vertices.get(b.vertices[0]);
+        const bVertexB = board.vertices.get(b.vertices[1]);
+
+        const aX = (aVertexA.x + aVertexB.x) / 2;
+        const aY = (aVertexA.y + aVertexB.y) / 2;
+
+        const bX = (bVertexA.x + bVertexB.x) / 2;
+        const bY = (bVertexA.y + bVertexB.y) / 2;
+
+        const angleA = Math.atan2(
+            aY - centerY,
+            aX - centerX
+        );
+
+        const angleB = Math.atan2(
+            bY - centerY,
+            bX - centerX
+        );
+
+        return angleA - angleB;
+    });
+
+    const portEdges = [];
+
+    if (portCount > 0) {
+        const spacing = borderEdges.length / portCount;
+
+        for (let i = 0; i < portCount; i++) {
+            const index = Math.round(i * spacing);
+
+            portEdges.push(
+                borderEdges[index % borderEdges.length]
+            );
+        }
+    }
+
+    const ports = shuffle(
+        DEFAULT_PORTS.slice(0, portCount)
+    );
+
+    const boardPorts = portEdges.map((edge, index) => ({
+        ...ports[index],
+        edgeId: edge.id,
+        vertices: [...edge.vertices],
+        ownerId: null
+    }));
+
+    board.ports = boardPorts;
+
+    // console.log(
+    //     "[PORTS]",
+    //     portEdges.map(edge => edge.id)
+    // );
+
+    // const portIndexes = portEdges.map(
+    //     edge => borderEdges.indexOf(edge)
+    // );
+
+    // console.log("[PORT INDEXES]", portIndexes);
 
     return board;
 }

@@ -13,6 +13,8 @@ class Player {
             sheep: 10,
             ore: 10
         };
+
+        this.ports = [];
     }
 
     addResource(resource, amount = 1) {
