@@ -1,7 +1,8 @@
 const Player = require("../game/Player");
 const {
     GAME_PHASES,
-    SETUP_SUBPHASES
+    SETUP_SUBPHASES,
+    GAMEPLAY_SUBPHASES
 } = require("../constants/GameConstants");
 
 function registerSocketHandlers(io, game) {
@@ -17,7 +18,9 @@ function registerSocketHandlers(io, game) {
             turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
             setupTurnOrder: game.setupTurnOrder,
             bank: game.bank.resources,
-            buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null
+            buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null,
+            discardRequirements: Object.fromEntries(game.discardRequirements),
+            robberTileId: game.robberTileId
         });
     }
 
@@ -226,6 +229,74 @@ function registerSocketHandlers(io, game) {
             if (!game.endTurn()) {
                 return;
             }
+
+            broadcastGameState();
+        });
+
+        socket.on("game:moveRobber", ({ tileId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.moveRobber(tileId)) {
+                console.log("ROBBER MOVE REJECTED");
+                return;
+            }
+
+            console.log(
+                "ROBBER MOVED:",
+                socket.playerId,
+                tileId
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:discardResources", ({ resources }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (!game.discardResources(
+                socket.playerId,
+                resources
+            )) {
+                console.log("DISCARD REJECTED");
+                return;
+            }
+
+            console.log(
+                "DISCARD SUCCESS:",
+                socket.playerId,
+                resources
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:moveRobber", ({ tileId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.moveRobber(tileId)) {
+                console.log("ROBBER MOVE REJECTED");
+                return;
+            }
+
+            console.log(
+                "ROBBER MOVED:",
+                socket.playerId,
+                tileId
+            );
 
             broadcastGameState();
         });

@@ -13,6 +13,16 @@ class Game {
         this.currentPlayerId = null;
         this.diceRoll = null;
         this.currentTrade = null;
+        this.discardRequirements = new Map();
+        this.robberTileId = null;
+
+        const desertTile = [...this.board.tiles.values()].find(
+            tile => tile.type === "desert"
+        );
+
+        if (desertTile) {
+            this.robberTileId = desertTile.id;
+        }
 
         this.phase = GAME_PHASES.LOBBY;
         this.subphase = SETUP_SUBPHASES.ROLL_FOR_TURN_ORDER;
@@ -52,7 +62,33 @@ class Game {
 
         this.diceRoll = [roll1, roll2];
 
-        const total = roll1 + roll2;
+        // const total = roll1 + roll2;
+        const total = 7;
+
+        console.log("DICE ROLL:", roll1, roll2, "TOTAL:", total);
+
+        if (total === 7) {
+            for (const player of this.players.values()) {
+                const resourceCount = Object.values(player.resources)
+                    .reduce((total, amount) => total + amount, 0);
+
+                if (resourceCount > 7) {
+                    this.discardRequirements.set(
+                        player.id,
+                        Math.floor(resourceCount / 2)
+                    );
+                }
+            }
+
+            console.log(
+                "DISCARD REQUIREMENTS:",
+                Object.fromEntries(this.discardRequirements)
+            );
+
+            this.subphase = GAMEPLAY_SUBPHASES.DISCARDING;
+
+            return true;
+        }
 
         // Map each resource to all players who should receive it.
         const production = new Map();
@@ -560,6 +596,33 @@ class Game {
         return true;
     }
 
+    moveRobber(tileId) {
+        if (this.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (this.subphase !== GAMEPLAY_SUBPHASES.ROBBER_PLACEMENT) {
+            return false;
+        }
+
+        const tile = this.board.tiles.get(tileId);
+
+        if (!tile) {
+            return false;
+        }
+
+        // The robber must actually move.
+        if (tileId === this.robberTileId) {
+            return false;
+        }
+
+        this.robberTileId = tileId;
+
+        this.subphase = GAMEPLAY_SUBPHASES.ACTION;
+
+        return true;
+    }
+
     payCost(playerId, cost) {
         const player = this.players.get(playerId);
 
@@ -988,6 +1051,76 @@ class Game {
         }
 
         this.currentTrade = null;
+
+        return true;
+    }
+
+    discardResources(playerId, resources) {
+        if (this.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (this.subphase !== GAMEPLAY_SUBPHASES.DISCARDING) {
+            return false;
+        }
+
+        const requiredAmount =
+            this.discardRequirements.get(playerId);
+
+        if (!requiredAmount) {
+            return false;
+        }
+
+        const player = this.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        // Validate each resource amount.
+        for (const resource of Object.keys(player.resources)) {
+            const amount = resources?.[resource] ?? 0;
+
+            if (!Number.isInteger(amount) || amount < 0) {
+                return false;
+            }
+
+            if (amount > player.resources[resource]) {
+                return false;
+            }
+        }
+
+        // Must discard exactly the required amount.
+        const total =
+            Object.values(resources).reduce(
+                (sum, amount) => sum + amount,
+                0
+            );
+
+        if (total !== requiredAmount) {
+            return false;
+        }
+
+        // Return resources to the bank.
+        for (const resource of Object.keys(player.resources)) {
+            const amount = resources[resource] ?? 0;
+
+            if (amount > 0) {
+                this.returnResourceToBank(
+                    playerId,
+                    resource,
+                    amount
+                );
+            }
+        }
+
+        // This player has finished discarding.
+        this.discardRequirements.delete(playerId);
+
+        // Everyone has finished.
+        if (this.discardRequirements.size === 0) {
+            this.subphase = GAMEPLAY_SUBPHASES.ROBBER_PLACEMENT;
+        }
 
         return true;
     }
