@@ -6,6 +6,10 @@ class Player {
         this.isHost = isHost;
         this.connected = false;
 
+        this.victoryPoints = 0;
+        this.secretVictoryPoints = 1;
+        
+
         this.resources = {
             wood: 10,
             brick: 10,

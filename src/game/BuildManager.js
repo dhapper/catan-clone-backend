@@ -211,6 +211,10 @@ class BuildManager {
             playerId: this.game.currentPlayerId
         };
 
+        this.game.updatePlayerVictoryPoints(
+            this.game.currentPlayerId
+        );
+
         this.claimPort(vertexId);
 
         if (this.game.phase === GAME_PHASES.SETUP) {
@@ -311,6 +315,10 @@ class BuildManager {
             type: STRUCTURE_TYPES.CITY,
             playerId: this.game.currentPlayerId
         };
+
+        this.game.updatePlayerVictoryPoints(
+            this.game.currentPlayerId
+        );
 
         return true;
     }

@@ -9,6 +9,7 @@ const RobberManager = require("./RobberManager");
 const TradeManager = require("./TradeManager");
 const ProductionManager = require("./ProductionManager");
 const TurnManager = require("./TurnManager");
+const VictoryPointManager = require("./VictoryPointManager");
 
 class Game {
     constructor(board) {
@@ -47,6 +48,7 @@ class Game {
         this.trade = new TradeManager(this);
         this.production = new ProductionManager(this);
         this.turn = new TurnManager(this);
+        this.victoryPoints = new VictoryPointManager(this);
     }
 
     addPlayer(player) {
@@ -57,6 +59,12 @@ class Game {
 
     rollProductionDice() {
         return this.production.rollProductionDice();
+    }
+
+    // VictoryPointManager.js
+
+    updatePlayerVictoryPoints(playerId) {
+        return this.victoryPoints.updatePlayerVictoryPoints(playerId);
     }
 
     // BuildManager.js
