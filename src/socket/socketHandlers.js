@@ -20,7 +20,8 @@ function registerSocketHandlers(io, game) {
             bank: game.bank.resources,
             buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null,
             discardRequirements: Object.fromEntries(game.discardRequirements),
-            robberTileId: game.robberTileId
+            robberTileId: game.robberTileId,
+            robberVictims: game.robberVictims
         });
     }
 
@@ -252,6 +253,30 @@ function registerSocketHandlers(io, game) {
                 socket.playerId,
                 tileId
             );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:stealResource", ({ victimId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.stealResource(victimId)) {
+                console.log("STEAL RESOURCE REJECTED");
+                return;
+            }
+
+            console.log(
+                "RESOURCE STOLEN FROM:",
+                victimId
+            );
+
+            game.robberVictims = [];
 
             broadcastGameState();
         });

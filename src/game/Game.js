@@ -22,6 +22,7 @@ class Game {
         this.currentTrade = null;
         this.discardRequirements = new Map();
         this.robberTileId = null;
+        this.robberVictims = [];
 
         this.phase = GAME_PHASES.LOBBY;
         this.subphase = SETUP_SUBPHASES.ROLL_FOR_TURN_ORDER;
@@ -159,6 +160,10 @@ class Game {
 
     moveRobber(tileId) {
         return this.robber.moveRobber(tileId);
+    }
+
+    stealResource(victimId) {
+        return this.robber.stealResource(victimId);
     }
 
     discardResources(playerId, resources) {

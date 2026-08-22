@@ -32,7 +32,8 @@ class ProductionManager {
 
         this.game.diceRoll = [roll1, roll2];
 
-        const total = roll1 + roll2;
+        // const total = roll1 + roll2;
+        const total = 7;
 
         console.log(
             "DICE ROLL:",
@@ -67,8 +68,13 @@ class ProductionManager {
                 )
             );
 
-            this.game.subphase =
-                GAMEPLAY_SUBPHASES.DISCARDING;
+            if (this.game.discardRequirements.size > 0) {
+                this.game.subphase =
+                    GAMEPLAY_SUBPHASES.DISCARDING;
+            } else {
+                this.game.subphase =
+                    GAMEPLAY_SUBPHASES.ROBBER_PLACEMENT;
+            }
 
             return true;
         }
@@ -98,7 +104,7 @@ class ProductionManager {
 
                 const amount =
                     BUILDING_PRODUCTION[
-                        vertex.building.type
+                    vertex.building.type
                     ];
 
                 if (!amount) {

@@ -39,7 +39,77 @@ class RobberManager {
         }
 
         this.game.robberTileId = tileId;
+
+        this.game.robberVictims = [];
+
+        for (const vertexId of tile.vertices) {
+            const vertex = this.game.board.vertices.get(vertexId);
+
+            if (!vertex?.building) {
+                continue;
+            }
+
+            const playerId = vertex.building.playerId;
+
+            if (playerId === this.game.currentPlayerId) {
+                continue;
+            }
+
+            if (!this.game.robberVictims.includes(playerId)) {
+                this.game.robberVictims.push(playerId);
+            }
+        }
+
+        if (this.game.robberVictims.length === 1) {
+            this.stealResource(
+                this.game.robberVictims[0]
+            );
+
+            this.game.robberVictims = [];
+        }
+
         this.game.subphase = GAMEPLAY_SUBPHASES.ACTION;
+
+        return true;
+    }
+
+    stealResource(victimId) {
+        const thief = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        const victim = this.game.players.get(victimId);
+
+        if (!thief || !victim) {
+            return false;
+        }
+
+        if (victimId === this.game.currentPlayerId) {
+            return false;
+        }
+
+        if (!this.game.robberVictims.includes(victimId)) {
+            return false;
+        }
+
+        const availableResources =
+            Object.keys(victim.resources).filter(
+                resource => victim.resources[resource] > 0
+            );
+
+        if (availableResources.length === 0) {
+            return false;
+        }
+
+        const resource =
+            availableResources[
+            Math.floor(
+                Math.random() * availableResources.length
+            )
+            ];
+
+        victim.removeResource(resource, 1);
+        thief.addResource(resource, 1);
 
         return true;
     }

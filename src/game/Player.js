@@ -7,15 +7,15 @@ class Player {
         this.connected = false;
 
         this.victoryPoints = 0;
-        this.secretVictoryPoints = 1;
+        this.secretVictoryPoints = 0;
         
 
         this.resources = {
-            wood: 10,
-            brick: 10,
-            wheat: 10,
-            sheep: 10,
-            ore: 10
+            wood: 1,
+            brick: 1,
+            wheat: 1,
+            sheep: 0,
+            ore: 0
         };
 
         this.ports = [];
