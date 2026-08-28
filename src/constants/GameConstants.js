@@ -17,8 +17,15 @@ const GAMEPLAY_SUBPHASES = Object.freeze({
     ROBBER_PLACEMENT: "robber_placement"
 });
 
+const SPECIAL_VICTORY_POINTS = Object.freeze({
+    LARGEST_ARMY: "largest_army",
+    LONGEST_ROAD: "longest_road"
+});
+
+
 module.exports = {
     GAME_PHASES,
     SETUP_SUBPHASES,
-    GAMEPLAY_SUBPHASES
+    GAMEPLAY_SUBPHASES,
+    SPECIAL_VICTORY_POINTS
 };

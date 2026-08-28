@@ -178,6 +178,7 @@ function registerSocketHandlers(io, game) {
             }
 
             game.phase = GAME_PHASES.SETUP;
+            game.devCards.initializeDeck();
 
             broadcastGameState();
         });
@@ -445,6 +446,29 @@ function registerSocketHandlers(io, game) {
 
             broadcastGameState();
         });
+
+        socket.on("game:buyDevCard", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.buyDevCard(socket.playerId)) {
+                console.log("DEV CARD PURCHASE REJECTED");
+                return;
+            }
+
+            console.log(
+                "DEV CARD PURCHASED:",
+                socket.playerId
+            );
+
+            broadcastGameState();
+        });
+
     });
 }
 

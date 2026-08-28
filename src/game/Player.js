@@ -11,14 +11,16 @@ class Player {
         
 
         this.resources = {
-            wood: 1,
-            brick: 1,
-            wheat: 1,
-            sheep: 0,
-            ore: 0
+            wood: 0,
+            brick: 0,
+            wheat: 17,
+            sheep: 17,
+            ore: 17
         };
 
         this.ports = [];
+
+        this.devCards = [];
     }
 
     addResource(resource, amount = 1) {
