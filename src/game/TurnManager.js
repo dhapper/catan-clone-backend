@@ -38,6 +38,19 @@ class TurnManager {
         const nextIndex =
             (currentIndex + 1) % playerCount;
 
+        const currentPlayer =
+            this.game.players.get(
+                this.game.currentPlayerId
+            );
+
+        // aging purchased dev cards
+
+        if (currentPlayer) {
+            for (const card of currentPlayer.devCards) {
+                card.boughtThisTurn = false;
+            }
+        }
+
         this.game.currentPlayerId =
             forwardOrder[nextIndex];
 

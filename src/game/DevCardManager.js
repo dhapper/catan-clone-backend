@@ -41,7 +41,12 @@ class DevCardManager {
 
         const card = this.deck.pop();
 
-        player.devCards.push(card);
+        // player.devCards.push(card);
+
+        player.devCards.push({
+            type: card,
+            boughtThisTurn: true
+        });
 
         return true;
     }

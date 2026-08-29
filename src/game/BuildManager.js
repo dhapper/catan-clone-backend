@@ -211,6 +211,59 @@ class BuildManager {
             playerId: this.game.currentPlayerId
         };
 
+        if (this.game.phase === GAME_PHASES.SETUP) {
+            const playerId = this.game.currentPlayerId;
+
+            let settlementCount = 0;
+
+            for (const boardVertex of this.game.board.vertices.values()) {
+                if (
+                    boardVertex.building &&
+                    boardVertex.building.playerId === playerId &&
+                    boardVertex.building.type === STRUCTURE_TYPES.SETTLEMENT
+                ) {
+                    settlementCount++;
+                }
+            }
+
+            if (settlementCount === 2) {
+                const resourceMap = {
+                    forest: "wood",
+                    pasture: "sheep",
+                    field: "wheat",
+                    hill: "brick",
+                    mountain: "ore"
+                };
+
+                console.log("SECOND SETTLEMENT:", playerId);
+
+                console.log(
+                    "SECOND SETTLEMENT ADJACENT TILES:",
+                    vertex.adjacentTiles
+                );
+
+                for (const tileId of vertex.adjacentTiles) {
+                    const tile = this.game.board.tiles.get(tileId);
+
+                    if (!tile) {
+                        continue;
+                    }
+
+                    const resource = resourceMap[tile.type];
+
+                    if (!resource) {
+                        continue;
+                    }
+
+                    this.game.giveResourceToPlayer(
+                        playerId,
+                        resource,
+                        1
+                    );
+                }
+            }
+        }
+
         this.game.updatePlayerVictoryPoints(
             this.game.currentPlayerId
         );
