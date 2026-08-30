@@ -187,6 +187,28 @@ class RobberManager {
 
         return true;
     }
+
+    startKnightRobberPlacement() {
+        if (this.game.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (
+            this.game.subphase !==
+            GAMEPLAY_SUBPHASES.ACTION
+        ) {
+            return false;
+        }
+
+        if (!this.game.currentPlayerId) {
+            return false;
+        }
+
+        this.game.subphase =
+            GAMEPLAY_SUBPHASES.ROBBER_PLACEMENT;
+
+        return true;
+    }
 }
 
 module.exports = RobberManager;

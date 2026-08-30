@@ -106,17 +106,30 @@ class BuildManager {
         }
 
         if (this.game.phase !== GAME_PHASES.SETUP) {
-            if (!this.game.canAfford(
-                this.game.currentPlayerId,
-                BUILD_COSTS[STRUCTURE_TYPES.ROAD]
-            )) {
+            const player = this.game.players.get(
+                this.game.currentPlayerId
+            );
+
+            if (!player) {
                 return false;
             }
 
-            this.game.payCost(
-                this.game.currentPlayerId,
-                BUILD_COSTS[STRUCTURE_TYPES.ROAD]
-            );
+            // Road Building allows free road placement.
+            if (this.isRoadBuildingActive()) {
+                player.roadBuildingRemaining--;
+            } else {
+                if (!this.game.canAfford(
+                    this.game.currentPlayerId,
+                    BUILD_COSTS[STRUCTURE_TYPES.ROAD]
+                )) {
+                    return false;
+                }
+
+                this.game.payCost(
+                    this.game.currentPlayerId,
+                    BUILD_COSTS[STRUCTURE_TYPES.ROAD]
+                );
+            }
         }
 
         edge.road = {
@@ -129,6 +142,17 @@ class BuildManager {
         }
 
         return true;
+    }
+
+    isRoadBuildingActive() {
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        return (
+            player &&
+            player.roadBuildingRemaining > 0
+        );
     }
 
     canBuildSettlement(vertexId) {
@@ -235,12 +259,12 @@ class BuildManager {
                     mountain: "ore"
                 };
 
-                console.log("SECOND SETTLEMENT:", playerId);
+                // console.log("SECOND SETTLEMENT:", playerId);
 
-                console.log(
-                    "SECOND SETTLEMENT ADJACENT TILES:",
-                    vertex.adjacentTiles
-                );
+                // console.log(
+                //     "SECOND SETTLEMENT ADJACENT TILES:",
+                //     vertex.adjacentTiles
+                // );
 
                 for (const tileId of vertex.adjacentTiles) {
                     const tile = this.game.board.tiles.get(tileId);
@@ -378,10 +402,10 @@ class BuildManager {
 
     getBuildAvailability(playerId) {
         return {
-            road: this.game.canAfford(
-                playerId,
-                BUILD_COSTS[STRUCTURE_TYPES.ROAD]
-            ),
+            road:
+                this.game.players.get(playerId)?.roadBuildingRemaining > 0 ||
+                this.game.canAfford(playerId, BUILD_COSTS[STRUCTURE_TYPES.ROAD]
+                ),
 
             settlement: this.game.canAfford(
                 playerId,

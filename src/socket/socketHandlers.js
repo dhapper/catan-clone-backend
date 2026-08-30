@@ -469,6 +469,73 @@ function registerSocketHandlers(io, game) {
             broadcastGameState();
         });
 
+        socket.on("game:playKnight", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.playKnight()) {
+                console.log("KNIGHT PLAY REJECTED");
+                return;
+            }
+
+            console.log(
+                "KNIGHT PLAYED:",
+                socket.playerId
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:playRoadBuilding", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.playRoadBuilding()) {
+                console.log("ROAD BUILDING PLAY REJECTED");
+                return;
+            }
+
+            console.log(
+                "ROAD BUILDING PLAYED:",
+                socket.playerId
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:playMonopoly", ({ resource }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.playMonopoly(resource)) {
+                console.log("MONOPOLY PLAY REJECTED");
+                return;
+            }
+
+            console.log(
+                "MONOPOLY PLAYED:",
+                socket.playerId,
+                resource
+            );
+
+            broadcastGameState();
+        });
+
     });
 }
 

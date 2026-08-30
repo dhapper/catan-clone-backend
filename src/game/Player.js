@@ -21,6 +21,8 @@ class Player {
         this.ports = [];
 
         this.devCards = [];
+        this.devCardPlayed = false;
+        this.roadBuildingRemaining = 0;
     }
 
     addResource(resource, amount = 1) {

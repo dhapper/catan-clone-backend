@@ -35,28 +35,26 @@ class TurnManager {
                 this.game.currentPlayerId
             );
 
-        const nextIndex =
-            (currentIndex + 1) % playerCount;
+        const nextIndex = (currentIndex + 1) % playerCount;
 
-        const currentPlayer =
-            this.game.players.get(
-                this.game.currentPlayerId
-            );
+        const currentPlayer = this.game.players.get(this.game.currentPlayerId);
 
         // aging purchased dev cards
-
         if (currentPlayer) {
             for (const card of currentPlayer.devCards) {
                 card.boughtThisTurn = false;
             }
         }
 
-        this.game.currentPlayerId =
-            forwardOrder[nextIndex];
+        // one card per turn reset
+        if (currentPlayer) {
+            currentPlayer.devCardPlayed = false;
+        }
+
+        this.game.currentPlayerId = forwardOrder[nextIndex];
 
         this.game.diceRoll = null;
-        this.game.subphase =
-            GAMEPLAY_SUBPHASES.PRODUCTION;
+        this.game.subphase = GAMEPLAY_SUBPHASES.PRODUCTION;
 
         return true;
     }

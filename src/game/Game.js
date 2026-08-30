@@ -185,6 +185,20 @@ class Game {
         );
     }
 
+    // DevCardManager.js
+
+    playKnight() {
+        return this.devCards.playKnight();
+    }
+
+    playRoadBuilding() {
+        return this.devCards.playRoadBuilding();
+    }
+
+    playMonopoly(resource) {
+        return this.devCards.playMonopoly(resource);
+    }
+
     // TradeManager.js
 
     bankTrade(offeredResources, wantedResources) {

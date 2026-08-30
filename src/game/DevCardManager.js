@@ -84,6 +84,136 @@ class DevCardManager {
 
         return this.drawCard(playerId);
     }
+
+    canPlayDevCard(playerId) {
+        if (this.game.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (this.game.subphase !== GAMEPLAY_SUBPHASES.ACTION) {
+            return false;
+        }
+
+        if (this.game.currentPlayerId !== playerId) {
+            return false;
+        }
+
+        const player = this.game.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        if (player.devCardPlayed) {
+            return false;
+        }
+
+        return true;
+    }
+
+    playKnight() {
+        const playerId = this.game.currentPlayerId;
+
+        if (!this.canPlayDevCard(playerId)) {
+            return false;
+        }
+
+        const player = this.game.players.get(playerId);
+
+        const knightIndex = player.devCards.findIndex(
+            card =>
+                card.type === "knight" &&
+                !card.boughtThisTurn
+        );
+
+        if (knightIndex === -1) {
+            return false;
+        }
+
+        player.devCards.splice(knightIndex, 1);
+
+        player.devCardPlayed = true;
+
+        return this.game.robber.startKnightRobberPlacement();
+    }
+
+    playRoadBuilding() {
+        const playerId = this.game.currentPlayerId;
+
+        if (!this.canPlayDevCard(playerId)) {
+            return false;
+        }
+
+        const player = this.game.players.get(playerId);
+
+        const cardIndex = player.devCards.findIndex(
+            card =>
+                card.type === "road_building" &&
+                !card.boughtThisTurn
+        );
+
+        if (cardIndex === -1) {
+            return false;
+        }
+
+        player.devCards.splice(cardIndex, 1);
+
+        player.devCardPlayed = true;
+        player.roadBuildingRemaining = 2;
+
+        return true;
+    }
+
+    playMonopoly(resource) {
+        const playerId = this.game.currentPlayerId;
+
+        if (!this.canPlayDevCard(playerId)) {
+            return false;
+        }
+
+        const player = this.game.players.get(playerId);
+
+        const cardIndex = player.devCards.findIndex(
+            card =>
+                card.type === "monopoly" &&
+                !card.boughtThisTurn
+        );
+
+        if (cardIndex === -1) {
+            return false;
+        }
+
+        const validResources = [
+            "wood",
+            "brick",
+            "wheat",
+            "sheep",
+            "ore"
+        ];
+
+        if (!validResources.includes(resource)) {
+            return false;
+        }
+
+        player.devCards.splice(cardIndex, 1);
+
+        for (const otherPlayer of this.game.players.values()) {
+            if (otherPlayer.id === playerId) {
+                continue;
+            }
+
+            const amount = otherPlayer.resources[resource];
+
+            if (amount > 0) {
+                otherPlayer.removeResource(resource, amount);
+                player.addResource(resource, amount);
+            }
+        }
+
+        player.devCardPlayed = true;
+
+        return true;
+    }
 }
 
 module.exports = DevCardManager;
