@@ -42,6 +42,13 @@ function createGameRoutes(game, io) {
     router.post("/game/build/settlement", (req, res) => {
         const { vertexId } = req.body;
 
+        console.log("BUILD SETTLEMENT REQUEST:", {
+            vertexId,
+            phase: game.phase,
+            subphase: game.subphase,
+            currentPlayerId: game.currentPlayerId
+        });
+
         const vertex = game.board.vertices.get(vertexId);
 
         if (!vertex) {

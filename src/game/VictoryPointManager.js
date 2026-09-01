@@ -66,7 +66,7 @@ class VictoryPointManager {
         player.secretVictoryPoints =
             this.calculateSecretVictoryPoints(playerId);
 
-        game.checkForWinner();
+        this.game.checkWinner();
 
         return true;
     }
