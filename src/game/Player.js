@@ -23,6 +23,7 @@ class Player {
         this.devCards = [];
         this.devCardPlayed = false;
         this.roadBuildingRemaining = 0;
+        this.inventionActive = false;
     }
 
     addResource(resource, amount = 1) {

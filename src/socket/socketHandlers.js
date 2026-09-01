@@ -536,6 +536,51 @@ function registerSocketHandlers(io, game) {
             broadcastGameState();
         });
 
+        socket.on("game:playInvention", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.playInvention()) {
+                console.log("INVENTION PLAY REJECTED");
+                return;
+            }
+
+            console.log(
+                "INVENTION PLAYED:",
+                socket.playerId
+            );
+
+            broadcastGameState();
+        });
+
+        socket.on("game:resolveInvention", ({ resources }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.resolveInvention(resources)) {
+                console.log("INVENTION RESOLUTION REJECTED");
+                return;
+            }
+
+            console.log(
+                "INVENTION RESOLVED:",
+                socket.playerId,
+                resources
+            );
+
+            broadcastGameState();
+        });
+
     });
 }
 

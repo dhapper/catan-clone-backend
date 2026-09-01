@@ -33,6 +33,18 @@ class VictoryPointManager {
         return victoryPoints;
     }
 
+    calculateSecretVictoryPoints(playerId) {
+        const player = this.game.players.get(playerId);
+
+        if (!player) {
+            return 0;
+        }
+
+        return player.devCards.filter(
+            card => card.type === "victory_point"
+        ).length;
+    }
+
     updatePlayerVictoryPoints(playerId) {
         const player = this.game.players.get(playerId);
 
@@ -42,6 +54,9 @@ class VictoryPointManager {
 
         player.victoryPoints =
             this.calculatePlayerVictoryPoints(playerId);
+
+        player.secretVictoryPoints =
+            this.calculateSecretVictoryPoints(playerId);
 
         return true;
     }

@@ -199,6 +199,14 @@ class Game {
         return this.devCards.playMonopoly(resource);
     }
 
+    playInvention() {
+        return this.devCards.playInvention();
+    }
+
+    resolveInvention(resources) {
+        return this.devCards.resolveInvention(resources);
+    }
+
     // TradeManager.js
 
     bankTrade(offeredResources, wantedResources) {

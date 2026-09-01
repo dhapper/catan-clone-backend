@@ -48,6 +48,8 @@ class DevCardManager {
             boughtThisTurn: true
         });
 
+        this.game.victoryPoints.updatePlayerVictoryPoints(playerId);
+
         return true;
     }
 
@@ -211,6 +213,91 @@ class DevCardManager {
         }
 
         player.devCardPlayed = true;
+
+        return true;
+    }
+
+    playInvention() {
+        const playerId = this.game.currentPlayerId;
+
+        if (!this.canPlayDevCard(playerId)) {
+            return false;
+        }
+
+        const player = this.game.players.get(playerId);
+
+        const cardIndex = player.devCards.findIndex(
+            card =>
+                card.type === "invention" &&
+                !card.boughtThisTurn
+        );
+
+        if (cardIndex === -1) {
+            return false;
+        }
+
+        player.devCards.splice(cardIndex, 1);
+
+        player.devCardPlayed = true;
+        player.inventionActive = true;
+
+        return true;
+    }
+
+    resolveInvention(resources) {
+        const playerId = this.game.currentPlayerId;
+        const player = this.game.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        if (!player.inventionActive) {
+            return false;
+        }
+
+        if (!resources || typeof resources !== "object") {
+            return false;
+        }
+
+        const validResources = [
+            "wood",
+            "brick",
+            "wheat",
+            "sheep",
+            "ore"
+        ];
+
+        let total = 0;
+
+        for (const resource of validResources) {
+            const amount = resources[resource] ?? 0;
+
+            if (!Number.isInteger(amount) || amount < 0) {
+                return false;
+            }
+
+            if (amount > this.game.bank.resources[resource]) {
+                return false;
+            }
+
+            total += amount;
+        }
+
+        if (total !== 2) {
+            return false;
+        }
+
+        for (const resource of validResources) {
+            const amount = resources[resource] ?? 0;
+
+            if (amount > 0) {
+                this.game.bank.removeResource(resource, amount);
+                player.addResource(resource, amount);
+            }
+        }
+
+        player.inventionActive = false;
 
         return true;
     }
