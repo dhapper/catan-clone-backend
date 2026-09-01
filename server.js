@@ -16,7 +16,7 @@ const io = new Server(httpServer, {
     }
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -33,6 +33,6 @@ app.use("/api", createGameRoutes(game, io));
 
 registerSocketHandlers(io, game);
 
-httpServer.listen(PORT, () => {
-    console.log(`Backend running on http://localhost:${PORT}`);
+httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log(`Backend running on port ${PORT}`);
 });
