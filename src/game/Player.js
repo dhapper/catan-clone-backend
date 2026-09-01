@@ -8,14 +8,17 @@ class Player {
 
         this.victoryPoints = 0;
         this.secretVictoryPoints = 0;
-        
+        this.hasLongestRoad = false;
+        this.longestRoad = 0;
+        this.hasLargestArmy = false;
+        this.knightsPlayed = 0;
 
         this.resources = {
             wood: 0,
             brick: 0,
-            wheat: 17,
-            sheep: 17,
-            ore: 17
+            wheat: 0,
+            sheep: 0,
+            ore: 0
         };
 
         this.ports = [];

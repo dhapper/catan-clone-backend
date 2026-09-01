@@ -53,7 +53,7 @@ class ProductionManager {
                             0
                         );
 
-                if (resourceCount > 7) {
+                if (resourceCount > this.game.robberSafetyNumber) {
                     this.game.discardRequirements.set(
                         player.id,
                         Math.floor(resourceCount / 2)

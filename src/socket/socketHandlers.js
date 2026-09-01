@@ -21,7 +21,12 @@ function registerSocketHandlers(io, game) {
             buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null,
             discardRequirements: Object.fromEntries(game.discardRequirements),
             robberTileId: game.robberTileId,
-            robberVictims: game.robberVictims
+            robberVictims: game.robberVictims,
+            robberSafetyNumber: game.robberSafetyNumber,
+            bankResourceCount: game.bankResourceCount,
+            victoryPointsNeeded: game.victoryPointsNeeded,
+            boardLayout: game.boardLayout,
+            winner: game.winner,
         });
     }
 
@@ -578,6 +583,46 @@ function registerSocketHandlers(io, game) {
                 resources
             );
 
+            broadcastGameState();
+        });
+
+        // game settings
+
+        socket.on("game:setBankResourceCount", (amount) => {
+            game.setBankResourceCount(amount);
+            broadcastGameState();
+        });
+
+        socket.on("game:setRobberSafetyNumber", (number) => {
+            game.setRobberSafetyNumber(number);
+            broadcastGameState();
+        });
+
+        socket.on("game:setVictoryPointsNeeded", (amount) => {
+            game.setVictoryPointsNeeded(amount);
+            broadcastGameState();
+        });
+
+        socket.on("game:setBoardLayout", (layout) => {
+            const boardLayout = layout
+                .split(",")
+                .map(value => Number(value.trim()));
+
+            if (boardLayout.some(value => value <= 0 || !Number.isInteger(value))) {
+                return;
+            }
+
+            game.setBoardLayout(boardLayout);
+            broadcastGameState();
+        });
+
+        socket.on("game:regenerateBoard", () => {
+            game.regenerateBoard();
+            broadcastGameState();
+        });
+
+        socket.on("game:reset", () => {
+            game.reset();
             broadcastGameState();
         });
 

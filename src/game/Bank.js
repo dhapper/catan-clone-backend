@@ -9,6 +9,12 @@ class Bank {
         };
     }
 
+    setResourceCount(amount) {
+        for (const resource in this.resources) {
+            this.resources[resource] = amount;
+        }
+    }
+
     addResource(resource, amount = 1) {
         if (!(resource in this.resources)) {
             return false;

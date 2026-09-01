@@ -4,7 +4,6 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 
 const createGameRoutes = require("./src/routes/gameRoutes");
-const generateBoard = require("./src/board/BoardGenerator");
 const Game = require("./src/game/Game");
 const registerSocketHandlers = require("./src/socket/socketHandlers");
 
@@ -22,11 +21,7 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-const board = generateBoard([
-    3, 4, 5, 4, 3
-]);
-
-const game = new Game(board);
+const game = new Game();
 
 app.get("/api/hello", (req, res) => {
     res.json({

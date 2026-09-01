@@ -136,6 +136,8 @@ class BuildManager {
             playerId: this.game.currentPlayerId
         };
 
+        this.game.updateLongestRoad();
+
         if (this.game.phase === GAME_PHASES.SETUP) {
             this.game.setupSettlementVertexId = null;
             this.game.setup.advanceTurn();

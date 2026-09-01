@@ -1,5 +1,5 @@
 const { GAME_PHASES, SETUP_SUBPHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
-const { STRUCTURE_TYPES, BUILDING_PRODUCTION, BUILD_COSTS } = require("../constants/BuildingConstants");
+const generateBoard = require("../../src/board/BoardGenerator");
 
 const Bank = require("./Bank");
 const SetupManager = require("./SetupManager");
@@ -13,17 +13,21 @@ const VictoryPointManager = require("./VictoryPointManager");
 const DevCardManager = require("./DevCardManager");
 
 class Game {
-    constructor(board) {
-        this.board = board;
-
+    constructor() {
+        this.boardLayout = [3, 4, 5, 4, 3];
+        this.board = generateBoard(this.boardLayout);
         this.players = new Map();
         this.bank = new Bank();
+        this.bankResourceCount = 19;
         this.currentPlayerId = null;
         this.diceRoll = null;
         this.currentTrade = null;
         this.discardRequirements = new Map();
         this.robberTileId = null;
         this.robberVictims = [];
+        this.robberSafetyNumber = 7;
+        this.victoryPointsNeeded = 10;
+        this.winner = null;
 
         this.phase = GAME_PHASES.LOBBY;
         this.subphase = SETUP_SUBPHASES.ROLL_FOR_TURN_ORDER;
@@ -32,10 +36,10 @@ class Game {
         this.colors = [
             "red",
             "blue",
-            "green",
+            "#51d657",
             "orange",
-            "purple",
-            "yellow"
+            "#8d2fa0",
+            "#fa53ec"
         ];
 
         this.turnOrderRolls = new Map();
@@ -58,6 +62,12 @@ class Game {
         this.players.set(player.id, player);
     }
 
+    // Bank.js
+
+    setBankResourceCount(amount) {
+        this.bank.setResourceCount(amount);
+    }
+
     // ProductionManager.js
 
     rollProductionDice() {
@@ -68,6 +78,10 @@ class Game {
 
     updatePlayerVictoryPoints(playerId) {
         return this.victoryPoints.updatePlayerVictoryPoints(playerId);
+    }
+
+    updateLongestRoad() {
+        return this.victoryPoints.updateLongestRoad();
     }
 
     // DevCardManager.js
@@ -237,6 +251,111 @@ class Game {
 
     cancelTrade(playerId) {
         return this.trade.cancelTrade(playerId);
+    }
+
+    // setters
+
+    setRobberSafetyNumber(number) {
+        if (!Number.isFinite(number) || number <= 0) {
+            this.robberSafetyNumber = 7;
+            return;
+        }
+
+        this.robberSafetyNumber = number;
+    }
+
+    setVictoryPointsNeeded(points) {
+        if (!Number.isFinite(points) || points <= 0) {
+            this.victoryPointsNeeded = 10;
+            return;
+        }
+
+        this.victoryPointsNeeded = points;
+    }
+
+    setBoardLayout(layout) {
+        this.boardLayout = layout;
+        this.board = generateBoard(layout);
+        this.robber.initializeRobber();
+    }
+
+    regenerateBoard() {
+        this.board = generateBoard(this.boardLayout);
+        this.robber.initializeRobber();
+    }
+
+    reset() {
+        // Reset board
+        this.board = generateBoard(this.boardLayout);
+
+        // Reset bank
+        this.bank.setResourceCount(this.bankResourceCount);
+
+        // Reset players
+        for (const player of this.players.values()) {
+            player.victoryPoints = 0;
+            player.secretVictoryPoints = 0;
+
+            player.hasLongestRoad = false;
+            player.longestRoad = 0;
+
+            player.hasLargestArmy = false;
+            player.knightsPlayed = 0;
+
+            player.resources = {
+                wood: 0,
+                brick: 0,
+                wheat: 0,
+                sheep: 0,
+                ore: 0
+            };
+
+            player.ports = [];
+
+            player.devCards = [];
+            player.devCardPlayed = false;
+            player.roadBuildingRemaining = 0;
+            player.inventionActive = false;
+        }
+
+        // Reset development card deck
+        this.devCards.initializeDeck();
+
+        // Reset robber
+        this.robber.initializeRobber();
+        this.robberVictims = [];
+
+        // Reset trades and discards
+        this.currentTrade = null;
+        this.discardRequirements = new Map();
+
+        // Reset turn/setup state
+        this.currentPlayerId = null;
+        this.diceRoll = null;
+        this.turnOrderRolls = new Map();
+        this.setupTurnOrder = [];
+        this.setupTurnIndex = 0;
+        this.setupSettlementVertexId = null;
+
+        // Return to lobby
+        this.phase = GAME_PHASES.LOBBY;
+        this.subphase = SETUP_SUBPHASES.ROLL_FOR_TURN_ORDER;
+
+        this.winner = null;
+    }
+
+    checkWinner() {
+        for (const player of this.players.values()) {
+            const totalVictoryPoints =
+                player.victoryPoints + player.secretVictoryPoints;
+
+            if (totalVictoryPoints >= this.victoryPointsNeeded) {
+                this.winner = player.id;
+                return player;
+            }
+        }
+
+        return null;
     }
 
 }
