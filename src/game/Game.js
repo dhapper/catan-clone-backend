@@ -39,7 +39,9 @@ class Game {
             "#51d657",
             "orange",
             "#8d2fa0",
-            "#fa53ec"
+            "#fa53ec",
+            "yellow",
+            "#00ffff"
         ];
 
         this.turnOrderRolls = new Map();
