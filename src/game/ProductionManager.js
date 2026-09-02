@@ -82,7 +82,10 @@ class ProductionManager {
         const production = new Map();
 
         for (const tile of this.game.board.tiles.values()) {
-            if (tile.numberToken !== total) {
+            if (
+                tile.numberToken !== total ||
+                tile.id === this.game.robberTileId
+            ) {
                 continue;
             }
 

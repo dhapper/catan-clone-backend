@@ -221,6 +221,8 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
+            io.emit("game:sound", "diceRoll");
+
             broadcastGameState();
         });
 
@@ -236,6 +238,8 @@ function registerSocketHandlers(io, game) {
             if (!game.endTurn()) {
                 return;
             }
+
+            io.emit("game:sound", "pickupDice");
 
             broadcastGameState();
         });
@@ -328,6 +332,8 @@ function registerSocketHandlers(io, game) {
                 socket.playerId,
                 tileId
             );
+
+            io.emit("game:sound", "place");
 
             broadcastGameState();
         });

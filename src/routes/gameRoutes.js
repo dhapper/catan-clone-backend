@@ -63,6 +63,8 @@ function createGameRoutes(game, io) {
             });
         }
 
+        io.emit("game:sound", "place");
+
         broadcastGameState();
 
         res.json({
@@ -88,6 +90,8 @@ function createGameRoutes(game, io) {
             });
         }
 
+        io.emit("game:sound", "place");
+
         broadcastGameState();
 
         res.json({
@@ -112,6 +116,8 @@ function createGameRoutes(game, io) {
                 error: "City cannot be built here"
             });
         }
+
+        io.emit("game:sound", "place");
 
         broadcastGameState();
 
