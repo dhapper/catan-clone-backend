@@ -264,32 +264,33 @@ class VictoryPointManager {
             if (newHolder) {
                 newHolder.hasLargestArmy = true;
             }
+        } else {
+            const currentKnights =
+                currentHolder.knightsPlayed;
 
-            // return;  // told to remove????
-        }
+            let newHolder = null;
 
-        let newHolder = null;
+            for (const player of this.game.players.values()) {
+                if (player.id === currentHolder.id) {
+                    continue;
+                }
 
-        for (const player of this.game.players.values()) {
-            if (player.id === currentHolder.id) {
-                continue;
+                if (player.knightsPlayed <= currentKnights) {
+                    continue;
+                }
+
+                if (
+                    !newHolder ||
+                    player.knightsPlayed > newHolder.knightsPlayed
+                ) {
+                    newHolder = player;
+                }
             }
 
-            if (player.knightsPlayed <= currentHolder.knightsPlayed) {
-                continue;
+            if (newHolder) {
+                currentHolder.hasLargestArmy = false;
+                newHolder.hasLargestArmy = true;
             }
-
-            if (
-                !newHolder ||
-                player.knightsPlayed > newHolder.knightsPlayed
-            ) {
-                newHolder = player;
-            }
-        }
-
-        if (newHolder) {
-            currentHolder.hasLargestArmy = false;
-            newHolder.hasLargestArmy = true;
         }
 
         for (const player of this.game.players.values()) {
