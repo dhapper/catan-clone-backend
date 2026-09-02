@@ -38,9 +38,7 @@ class Game {
             "blue",
             "#51d657",
             "orange",
-            "#8d2fa0",
             "#fa53ec",
-            "yellow",
             "#00ffff"
         ];
 
