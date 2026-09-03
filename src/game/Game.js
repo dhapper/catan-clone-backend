@@ -66,6 +66,7 @@ class Game {
 
     setBankResourceCount(amount) {
         this.bank.setResourceCount(amount);
+        this.bankResourceCount = amount;
     }
 
     // ProductionManager.js

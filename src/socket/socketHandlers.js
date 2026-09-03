@@ -244,29 +244,6 @@ function registerSocketHandlers(io, game) {
             broadcastGameState();
         });
 
-        socket.on("game:moveRobber", ({ tileId }) => {
-            if (!socket.playerId) {
-                return;
-            }
-
-            if (game.currentPlayerId !== socket.playerId) {
-                return;
-            }
-
-            if (!game.moveRobber(tileId)) {
-                console.log("ROBBER MOVE REJECTED");
-                return;
-            }
-
-            console.log(
-                "ROBBER MOVED:",
-                socket.playerId,
-                tileId
-            );
-
-            broadcastGameState();
-        });
-
         socket.on("game:stealResource", ({ victimId }) => {
             if (!socket.playerId) {
                 return;
