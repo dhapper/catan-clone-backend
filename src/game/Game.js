@@ -285,15 +285,44 @@ class Game {
         this.robber.initializeRobber();
     }
 
-    reset() {
+    reset(keepPlayers = false) {
         // Reset board
         this.board = generateBoard(this.boardLayout);
 
         // Reset bank
         this.bank.setResourceCount(this.bankResourceCount);
 
-        // CLEAR ALL PLAYERS FROM THE GAME MAP
-        this.players.clear();
+
+        if (keepPlayers) {
+            for (const player of this.players.values()) {
+            player.victoryPoints = 0;
+            player.secretVictoryPoints = 0;
+
+            player.hasLongestRoad = false;
+            player.longestRoad = 0;
+
+            player.hasLargestArmy = false;
+            player.knightsPlayed = 0;
+
+            player.resources = {
+                wood: 0,
+                brick: 0,
+                wheat: 0,
+                sheep: 0,
+                ore: 0
+            };
+
+            player.ports = [];
+
+            player.devCards = [];
+            player.devCardPlayed = false;
+            player.roadBuildingRemaining = 0;
+            player.inventionActive = false;
+        }
+        } else {
+            // CLEAR ALL PLAYERS FROM THE GAME MAP
+            this.players.clear();
+        }
 
         // Reset development card deck
         this.devCards.initializeDeck();

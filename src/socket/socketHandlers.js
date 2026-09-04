@@ -605,7 +605,7 @@ function registerSocketHandlers(io, game) {
         });
 
         socket.on("game:reset", () => {
-            game.reset();
+            game.reset(true);
             broadcastGameState();
         });
 
