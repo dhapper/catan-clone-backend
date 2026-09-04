@@ -110,22 +110,14 @@ function createGameRoutes(game, io) {
     });
 
     router.post("/game/reset", (req, res) => {
-        if (typeof game.reset === "function") {
-            game.reset();
-        } else {
-            game.phase = "setup";
-            game.subphase = "initial";
-            game.players.clear();
-            game.currentPlayerId = null;
-        }
-
+        game.reset();
+        io.emit("game:reset");
         io.emit("game:sound", "reset");
-
         broadcastGameState();
 
         res.json({
             success: true,
-            message: "Game state reset successfully"
+            message: "Game and players fully reset"
         });
     });
 
