@@ -109,6 +109,18 @@ function createGameRoutes(game, io) {
         });
     });
 
+    router.post("/game/reset", (req, res) => {
+        game.reset();
+        io.emit("game:reset");
+        io.emit("game:sound", "reset");
+        broadcastGameState();
+
+        res.json({
+            success: true,
+            message: "Game and players fully reset"
+        });
+    });
+
     router.post("/game/build/city", (req, res) => {
         const { vertexId } = req.body;
 
