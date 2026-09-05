@@ -28,6 +28,7 @@ function createGameRoutes(game, io) {
             boardLayout: game.boardLayout,
             winner: game.winner,
             ports: game.board.ports,
+            turnEndsAt: game.turnEndsAt
         });
     }
 

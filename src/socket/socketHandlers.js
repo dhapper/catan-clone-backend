@@ -1,4 +1,5 @@
 const Player = require("../game/Player");
+const { checkTurnTimer } = require("../game/TurnTimer");
 const {
     GAME_PHASES,
     SETUP_SUBPHASES,
@@ -7,6 +8,9 @@ const {
 
 function registerSocketHandlers(io, game) {
     function broadcastGameState() {
+
+        checkTurnTimer(io, game, broadcastGameState);
+
         io.emit("game:state", {
             players: [...game.players.values()],
             colors: game.colors,
@@ -28,6 +32,7 @@ function registerSocketHandlers(io, game) {
             boardLayout: game.boardLayout,
             pieceLimits: game.pieceLimits,
             winner: game.winner,
+            turnEndsAt: game.turnEndsAt
         });
     }
 
