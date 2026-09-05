@@ -21,6 +21,8 @@ class Game {
         this.bankResourceCount = 19;
         this.currentPlayerId = null;
         this.diceRoll = null;
+        this.timerPaused = false;
+        this.timerRemainingMs = null;
         this.currentTrade = null;
         this.discardRequirements = new Map();
         this.robberTileId = null;
