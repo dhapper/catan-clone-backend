@@ -12,6 +12,14 @@ class SetupManager {
     createTurnOrder() {
         const players = [...this.game.players.values()];
 
+        for (const player of players) {
+            player.pieces = {
+                road: this.game.pieceLimits.road,
+                settlement: this.game.pieceLimits.settlement,
+                city: this.game.pieceLimits.city
+            };
+        }
+
         players.sort((a, b) => {
             const aRolls = this.game.turnOrderRolls.get(a.id);
             const bRolls = this.game.turnOrderRolls.get(b.id);

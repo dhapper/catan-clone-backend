@@ -24,6 +24,7 @@ function createGameRoutes(game, io) {
             robberSafetyNumber: game.robberSafetyNumber,
             bankResourceCount: game.bankResourceCount,
             victoryPointsNeeded: game.victoryPointsNeeded,
+            pieceLimits: game.pieceLimits,
             boardLayout: game.boardLayout,
             winner: game.winner,
             ports: game.board.ports,

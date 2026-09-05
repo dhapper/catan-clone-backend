@@ -26,6 +26,7 @@ function registerSocketHandlers(io, game) {
             bankResourceCount: game.bankResourceCount,
             victoryPointsNeeded: game.victoryPointsNeeded,
             boardLayout: game.boardLayout,
+            pieceLimits: game.pieceLimits,
             winner: game.winner,
         });
     }
@@ -606,6 +607,11 @@ function registerSocketHandlers(io, game) {
 
         socket.on("game:reset", () => {
             game.reset(true);
+            broadcastGameState();
+        });
+
+        socket.on("game:setPieceLimit", ({ piece, value }) => {
+            game.setPieceLimit(piece, value);
             broadcastGameState();
         });
 

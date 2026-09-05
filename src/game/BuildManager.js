@@ -23,6 +23,14 @@ class BuildManager {
 
         const currentPlayerId = this.game.currentPlayerId;
 
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        if (!player || player.pieces?.road <= 0) {
+            return false;
+        }
+
         for (const vertexId of edge.vertices) {
             const vertex = this.game.board.vertices.get(vertexId);
 
@@ -136,6 +144,13 @@ class BuildManager {
             playerId: this.game.currentPlayerId
         };
 
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        player.pieces.road--;
+
+
         this.game.updateLongestRoad();
 
         if (this.game.phase === GAME_PHASES.SETUP) {
@@ -161,6 +176,14 @@ class BuildManager {
         const vertex = this.game.board.vertices.get(vertexId);
 
         if (!vertex || vertex.building) {
+            return false;
+        }
+
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        if (!player || player.pieces?.settlement <= 0) {
             return false;
         }
 
@@ -236,6 +259,12 @@ class BuildManager {
             type: STRUCTURE_TYPES.SETTLEMENT,
             playerId: this.game.currentPlayerId
         };
+
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        player.pieces.settlement--;
 
         if (this.game.phase === GAME_PHASES.SETUP) {
             const playerId = this.game.currentPlayerId;
@@ -356,6 +385,14 @@ class BuildManager {
             return false;
         }
 
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        if (!player || player.pieces?.city <= 0) {
+            return false;
+        }
+
         return true;
     }
 
@@ -394,6 +431,13 @@ class BuildManager {
             type: STRUCTURE_TYPES.CITY,
             playerId: this.game.currentPlayerId
         };
+
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        player.pieces.city--;
+        player.pieces.settlement++;
 
         this.game.updatePlayerVictoryPoints(
             this.game.currentPlayerId

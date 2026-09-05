@@ -29,17 +29,23 @@ class Game {
         this.victoryPointsNeeded = 10;
         this.winner = null;
 
+        this.pieceLimits = {
+            road: 15,
+            settlement: 5,
+            city: 4
+        };
+
         this.phase = GAME_PHASES.LOBBY;
         this.subphase = SETUP_SUBPHASES.ROLL_FOR_TURN_ORDER;
         this.setupSettlementVertexId = null;
 
         this.colors = [
-            "red",
-            "blue",
-            "#51d657",
-            "orange",
-            "#fa53ec",
-            "#00ffff"
+            "#e24c4c",
+            "#4751dd",
+            "#71d876",
+            "#a36ac9",
+            "#e99550",
+            "#6be0e0"
         ];
 
         this.turnOrderRolls = new Map();
@@ -280,6 +286,18 @@ class Game {
         this.robber.initializeRobber();
     }
 
+    setPieceLimit(piece, value) {
+        if (!["road", "settlement", "city"].includes(piece)) {
+            return;
+        }
+
+        if (!Number.isInteger(value) || value <= 0) {
+            return;
+        }
+
+        this.pieceLimits[piece] = value;
+    }
+
     regenerateBoard() {
         this.board = generateBoard(this.boardLayout);
         this.robber.initializeRobber();
@@ -295,30 +313,30 @@ class Game {
 
         if (keepPlayers) {
             for (const player of this.players.values()) {
-            player.victoryPoints = 0;
-            player.secretVictoryPoints = 0;
+                player.victoryPoints = 0;
+                player.secretVictoryPoints = 0;
 
-            player.hasLongestRoad = false;
-            player.longestRoad = 0;
+                player.hasLongestRoad = false;
+                player.longestRoad = 0;
 
-            player.hasLargestArmy = false;
-            player.knightsPlayed = 0;
+                player.hasLargestArmy = false;
+                player.knightsPlayed = 0;
 
-            player.resources = {
-                wood: 0,
-                brick: 0,
-                wheat: 0,
-                sheep: 0,
-                ore: 0
-            };
+                player.resources = {
+                    wood: 0,
+                    brick: 0,
+                    wheat: 0,
+                    sheep: 0,
+                    ore: 0
+                };
 
-            player.ports = [];
+                player.ports = [];
 
-            player.devCards = [];
-            player.devCardPlayed = false;
-            player.roadBuildingRemaining = 0;
-            player.inventionActive = false;
-        }
+                player.devCards = [];
+                player.devCardPlayed = false;
+                player.roadBuildingRemaining = 0;
+                player.inventionActive = false;
+            }
         } else {
             // CLEAR ALL PLAYERS FROM THE GAME MAP
             this.players.clear();
