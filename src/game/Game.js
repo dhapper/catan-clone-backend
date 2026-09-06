@@ -301,7 +301,7 @@ class Game {
     }
 
     regenerateBoard() {
-        this.board = generateBoard(this.boardLayout);
+        this.board = generateBoard(this.boardLayout, { isReroll: true });
         this.robber.initializeRobber();
     }
 

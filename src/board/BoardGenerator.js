@@ -29,7 +29,82 @@ function shuffle(array) {
     return shuffled;
 }
 
-function generateBoard(rowSizes) {
+function tilesShareVertex(tileA, tileB) {
+    return tileA.vertices.some(vertexId =>
+        tileB.vertices.includes(vertexId)
+    );
+}
+
+function findNonAdjacentTiles(tiles, count, selected = [], startIndex = 0) {
+    if (selected.length === count) {
+        return selected;
+    }
+
+    for (let index = startIndex; index < tiles.length; index++) {
+        const tile = tiles[index];
+
+        if (selected.some(selectedTile =>
+            tilesShareVertex(tile, selectedTile)
+        )) {
+            continue;
+        }
+
+        const result = findNonAdjacentTiles(
+            tiles,
+            count,
+            [...selected, tile],
+            index + 1
+        );
+
+        if (result) {
+            return result;
+        }
+    }
+
+    return null;
+}
+
+function assignNumberTokens(board, tileCount, isReroll) {
+    const resourceTiles = [...board.tiles.values()].filter(
+        tile => tile.type !== "desert"
+    );
+
+    const tokens = shuffle(ALL_TOKENS.slice(0, tileCount))
+        .slice(0, resourceTiles.length);
+
+    if (!isReroll) {
+        resourceTiles.forEach((tile, index) => {
+            tile.numberToken = tokens[index];
+        });
+        return;
+    }
+
+    const redTokens = tokens.filter(token => token === 6 || token === 8);
+    const otherTokens = shuffle(
+        tokens.filter(token => token !== 6 && token !== 8)
+    );
+    const redTileCandidates = shuffle(resourceTiles);
+    const redTiles = findNonAdjacentTiles(
+        redTileCandidates,
+        redTokens.length
+    );
+
+    if (!redTiles) {
+        throw new Error("Unable to place 6 and 8 tokens without adjacency");
+    }
+
+    redTiles.forEach((tile, index) => {
+        tile.numberToken = redTokens[index];
+    });
+
+    resourceTiles
+        .filter(tile => !redTiles.includes(tile))
+        .forEach((tile, index) => {
+            tile.numberToken = otherTokens[index];
+        });
+}
+
+function generateBoard(rowSizes, { isReroll = false } = {}) {
     const board = new Board(rowSizes);
     board.hexSize = HEX_SIZE;
 
@@ -41,9 +116,6 @@ function generateBoard(rowSizes) {
 
     const tileTypes =
         shuffle(ALL_TILES.slice(0, tileCount));
-
-    const numberTokens =
-        shuffle(ALL_TOKENS.slice(0, tileCount));
 
     let tileId = 0;
     let vertexId = 0;
@@ -87,12 +159,6 @@ function generateBoard(rowSizes) {
             const resource =
                 tileTypeInfo?.resource ?? null;
 
-            let numberToken = null;
-
-            if (tileType !== "desert") {
-                numberToken = numberTokens.shift();
-            }
-
             const tile = new Tile(
                 `t${tileId}`,
                 row,
@@ -100,8 +166,7 @@ function generateBoard(rowSizes) {
                 x,
                 y,
                 tileType,
-                resource,
-                numberToken
+                resource
             );
 
             // Generate the six vertices of this hex
@@ -265,6 +330,8 @@ function generateBoard(rowSizes) {
     }));
 
     board.ports = boardPorts;
+
+    assignNumberTokens(board, tileCount, isReroll);
 
     // console.log(
     //     "[PORTS]",
