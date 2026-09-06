@@ -1,5 +1,5 @@
 const Player = require("../game/Player");
-const { checkTurnTimer } = require("../game/TurnTimer");
+const { checkTurnTimer, toggleTurnTimer } = require("../game/TurnTimer");
 const {
     GAME_PHASES,
     SETUP_SUBPHASES,
@@ -32,7 +32,9 @@ function registerSocketHandlers(io, game) {
             boardLayout: game.boardLayout,
             pieceLimits: game.pieceLimits,
             winner: game.winner,
-            turnEndsAt: game.turnEndsAt
+            turnEndsAt: game.turnEndsAt,
+            timerPaused: game.timerPaused,
+            timerRemainingMs: game.timerRemainingMs
         });
     }
 
@@ -246,6 +248,14 @@ function registerSocketHandlers(io, game) {
             }
 
             io.emit("game:sound", "pickupDice");
+
+            broadcastGameState();
+        });
+
+        socket.on("game:toggleTimer", () => {
+            if (!socket.playerId || !toggleTurnTimer(game)) {
+                return;
+            }
 
             broadcastGameState();
         });
