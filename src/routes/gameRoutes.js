@@ -1,4 +1,5 @@
 const express = require("express");
+const { emitAchievementSound } = require("../services/SoundManager");
 
 const router = express.Router();
 
@@ -68,13 +69,19 @@ function createGameRoutes(game, io) {
             });
         }
 
-        if (!game.placeSettlement(vertexId)) {
+        const result = game.placeSettlement(vertexId);
+
+        if (!result || !result.success) {
             return res.status(400).json({
                 error: "Settlement cannot be built here"
             });
         }
 
         io.emit("game:sound", "place");
+
+        if (result.achievementChanged) {
+            emitAchievementSound(io);
+        }
 
         broadcastGameState();
 
@@ -95,13 +102,19 @@ function createGameRoutes(game, io) {
             });
         }
 
-        if (!game.placeRoad(edgeId)) {
+        const result = game.placeRoad(edgeId);
+
+        if (!result || !result.success) {
             return res.status(400).json({
                 error: "Road cannot be built here"
             });
         }
 
         io.emit("game:sound", "place");
+
+        if (result.achievementChanged) {
+            emitAchievementSound(io);
+        }
 
         broadcastGameState();
 

@@ -151,14 +151,18 @@ class BuildManager {
         player.pieces.road--;
 
 
-        this.game.updateLongestRoad();
+        const achievementChanged =
+            this.game.updateLongestRoad();
 
         if (this.game.phase === GAME_PHASES.SETUP) {
             this.game.setupSettlementVertexId = null;
             this.game.setup.advanceTurn();
         }
 
-        return true;
+        return {
+            success: true,
+            achievementChanged
+        };
     }
 
     isRoadBuildingActive() {
@@ -266,6 +270,9 @@ class BuildManager {
 
         player.pieces.settlement--;
 
+        const achievementChanged =
+            this.game.updateLongestRoad();
+
         if (this.game.phase === GAME_PHASES.SETUP) {
             const playerId = this.game.currentPlayerId;
 
@@ -330,7 +337,10 @@ class BuildManager {
             this.game.subphase = SETUP_SUBPHASES.PLACING_ROAD;
         }
 
-        return true;
+        return {
+            success: true,
+            achievementChanged
+        };
     }
 
     claimPort(vertexId) {

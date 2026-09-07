@@ -1,4 +1,5 @@
 const { GAME_PHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
+const { emitNextTurnStartSound } = require("../services/SoundManager");
 
 let turnTimeout = null;
 let timedPlayerId = null;
@@ -41,7 +42,7 @@ function checkTurnTimer(io, game, broadcastGameState) {
         }
 
         if (game.endTurn()) {
-            io.emit("game:sound", "pickupDice");
+            emitNextTurnStartSound(io, game);
         }
 
         broadcastGameState();

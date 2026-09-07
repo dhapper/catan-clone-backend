@@ -161,6 +161,7 @@ class VictoryPointManager {
     }
 
     updateLongestRoad() {
+        let achievementChanged = false;
         let currentHolder = null;
 
         for (const player of this.game.players.values()) {
@@ -200,6 +201,7 @@ class VictoryPointManager {
 
             if (newHolder) {
                 newHolder.hasLongestRoad = true;
+                achievementChanged = true;
             }
         } else {
             const currentLength =
@@ -227,15 +229,19 @@ class VictoryPointManager {
             if (newHolder) {
                 currentHolder.hasLongestRoad = false;
                 newHolder.hasLongestRoad = true;
+                achievementChanged = true;
             }
         }
 
         for (const player of this.game.players.values()) {
             this.updatePlayerVictoryPoints(player.id);
         }
+
+        return achievementChanged;
     }
 
     updateLargestArmy() {
+        let achievementChanged = false;
         let currentHolder = null;
 
         for (const player of this.game.players.values()) {
@@ -263,6 +269,7 @@ class VictoryPointManager {
 
             if (newHolder) {
                 newHolder.hasLargestArmy = true;
+                achievementChanged = true;
             }
         } else {
             const currentKnights =
@@ -290,12 +297,15 @@ class VictoryPointManager {
             if (newHolder) {
                 currentHolder.hasLargestArmy = false;
                 newHolder.hasLargestArmy = true;
+                achievementChanged = true;
             }
         }
 
         for (const player of this.game.players.values()) {
             this.updatePlayerVictoryPoints(player.id);
         }
+
+        return achievementChanged;
     }
 }
 

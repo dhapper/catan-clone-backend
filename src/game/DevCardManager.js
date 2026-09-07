@@ -135,9 +135,13 @@ class DevCardManager {
         player.devCards.splice(knightIndex, 1);
         player.devCardPlayed = true;
         player.knightsPlayed++;
-        this.game.victoryPoints.updateLargestArmy();
-        
-        return this.game.robber.startKnightRobberPlacement();
+        const achievementChanged =
+            this.game.victoryPoints.updateLargestArmy();
+
+        return {
+            success: this.game.robber.startKnightRobberPlacement(),
+            achievementChanged
+        };
     }
 
     playRoadBuilding() {

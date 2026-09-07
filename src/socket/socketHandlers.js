@@ -5,6 +5,10 @@ const {
     SETUP_SUBPHASES,
     GAMEPLAY_SUBPHASES
 } = require("../constants/GameConstants");
+const {
+    emitNextTurnStartSound,
+    emitAchievementSound
+} = require("../services/SoundManager");
 
 function registerSocketHandlers(io, game) {
     function broadcastGameState() {
@@ -247,7 +251,7 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
-            io.emit("game:sound", "pickupDice");
+            emitNextTurnStartSound(io, game);
 
             broadcastGameState();
         });
@@ -482,9 +486,15 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
-            if (!game.playKnight()) {
+            const result = game.playKnight();
+
+            if (!result || !result.success) {
                 console.log("KNIGHT PLAY REJECTED");
                 return;
+            }
+
+            if (result.achievementChanged) {
+                emitAchievementSound(io);
             }
 
             console.log(
@@ -631,6 +641,7 @@ function registerSocketHandlers(io, game) {
         });
 
     });
+
 }
 
 module.exports = registerSocketHandlers;
