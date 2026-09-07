@@ -32,8 +32,8 @@ class ProductionManager {
 
         this.game.diceRoll = [roll1, roll2];
 
-        // const total = roll1 + roll2;
-        const total = 7;
+        const total = roll1 + roll2;
+        // const total = 7;
 
         console.log(
             "DICE ROLL:",
