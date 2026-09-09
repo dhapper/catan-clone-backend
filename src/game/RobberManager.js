@@ -40,6 +40,14 @@ class RobberManager {
 
         this.game.robberTileId = tileId;
 
+        const tileResource =
+            tile.resource ?? "desert";
+
+        this.game.turnLog.addMessage(
+            "ROBBER",
+            `Robber moved to ${tileResource}:${tile.numberToken ?? "-"}`
+        );
+
         this.game.robberVictims = [];
 
         for (const vertexId of tile.vertices) {
@@ -111,6 +119,11 @@ class RobberManager {
         victim.removeResource(resource, 1);
         thief.addResource(resource, 1);
 
+        this.game.turnLog.addMessage(
+            "ROBBER",
+            `${thief.name} stole resource from ${victim.name}`
+        );
+
         return true;
     }
 
@@ -175,6 +188,14 @@ class RobberManager {
                 );
             }
         }
+
+        const discardedResources =
+            this.game.turnLog.formatResources(resources);
+
+        this.game.turnLog.addMessage(
+            "DISCARD",
+            `${player.name} discarded ${discardedResources}`
+        );
 
         // This player has finished discarding.
         this.game.discardRequirements.delete(playerId);

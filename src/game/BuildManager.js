@@ -99,6 +99,7 @@ class BuildManager {
 
     placeRoad(edgeId) {
         const edge = this.game.board.edges.get(edgeId);
+        const setupRoad = this.game.phase === GAME_PHASES.SETUP;
 
         if (!edge) {
             return false;
@@ -150,6 +151,9 @@ class BuildManager {
 
         player.pieces.road--;
 
+        if (!setupRoad) {
+            this.game.turnLog.addMessage("INFRA", "Road placed");
+        }
 
         const achievementChanged =
             this.game.updateLongestRoad();
@@ -240,6 +244,7 @@ class BuildManager {
 
     placeSettlement(vertexId) {
         const vertex = this.game.board.vertices.get(vertexId);
+        const setupSettlement = this.game.phase === GAME_PHASES.SETUP;
 
         if (!this.canBuildSettlement(vertexId)) {
             return false;
@@ -324,6 +329,10 @@ class BuildManager {
                     );
                 }
             }
+        }
+
+        if (!setupSettlement) {
+            this.game.turnLog.addMessage("INFRA", "Settlement placed");
         }
 
         this.game.updatePlayerVictoryPoints(
@@ -448,6 +457,8 @@ class BuildManager {
 
         player.pieces.city--;
         player.pieces.settlement++;
+
+        this.game.turnLog.addMessage("INFRA", "City placed");
 
         this.game.updatePlayerVictoryPoints(
             this.game.currentPlayerId

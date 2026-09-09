@@ -38,7 +38,8 @@ function registerSocketHandlers(io, game) {
             winner: game.winner,
             turnEndsAt: game.turnEndsAt,
             timerPaused: game.timerPaused,
-            timerRemainingMs: game.timerRemainingMs
+            timerRemainingMs: game.timerRemainingMs,
+            turnLog: game.turnLog.entries
         });
     }
 

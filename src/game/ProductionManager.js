@@ -20,7 +20,7 @@ class ProductionManager {
         if (
             this.game.subphase !==
             GAMEPLAY_SUBPHASES.PRODUCTION
-        ) { 
+        ) {
             return false;
         }
 
@@ -34,6 +34,8 @@ class ProductionManager {
 
         const total = roll1 + roll2;
         // const total = 7;
+
+        this.game.turnLog.setRoll(total);
 
         console.log(
             "DICE ROLL:",
@@ -124,6 +126,8 @@ class ProductionManager {
             }
         }
 
+        const playerProduction = new Map();
+
         for (
             const [resource, playerProductions]
             of production
@@ -139,6 +143,7 @@ class ProductionManager {
                 this.game.bank.resources[resource] <
                 totalDemand
             ) {
+                this.game.turnLog.addMessage("PRODUCTION", `Insufficient ${resource} cards to distribute`);
                 continue;
             }
 
@@ -151,7 +156,46 @@ class ProductionManager {
                     resource,
                     production.amount
                 );
+
+                if (!playerProduction.has(production.playerId)) {
+                    playerProduction.set(
+                        production.playerId,
+                        {}
+                    );
+                }
+
+                const resources =
+                    playerProduction.get(
+                        production.playerId
+                    );
+
+                resources[resource] =
+                    (resources[resource] ?? 0) +
+                    production.amount;
             }
+
+        }
+
+        for (
+            const [playerId, resources]
+            of playerProduction
+        ) {
+            const player =
+                this.game.players.get(playerId);
+
+            if (!player) {
+                continue;
+            }
+
+            const producedResources =
+                this.game.turnLog.formatResources(
+                    resources
+                );
+
+            this.game.turnLog.addMessage(
+                "PRODUCTION",
+                `${player.name} produced ${producedResources}`
+            );
         }
 
         this.game.subphase =

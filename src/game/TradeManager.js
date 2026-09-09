@@ -174,6 +174,14 @@ class TradeManager {
             }
         }
 
+        const offeredResourcesStr = this.game.turnLog.formatResources(offeredResources);
+        const wantedResourcesStr = this.game.turnLog.formatResources(wantedResources);
+        const message =
+            `${player.name} ◀ ${wantedResourcesStr}\n` +
+            `Bank ◀ ${offeredResourcesStr}`;
+
+        this.game.turnLog.addMessage("TRADE", message);
+
         return true;
     }
 
@@ -449,6 +457,14 @@ class TradeManager {
                 );
             }
         }
+
+        const offeredResourcesStr = this.game.turnLog.formatResources(this.game.currentTrade.offered);
+        const wantedResourcesStr = this.game.turnLog.formatResources(this.game.currentTrade.wanted);
+        const message =
+            `${creator.name} ◀ ${wantedResourcesStr}\n` +
+            `${recipient.name} ◀ ${offeredResourcesStr}`;
+
+        this.game.turnLog.addMessage("TRADE", message);
 
         this.game.currentTrade = null;
 

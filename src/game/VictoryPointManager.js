@@ -202,6 +202,8 @@ class VictoryPointManager {
             if (newHolder) {
                 newHolder.hasLongestRoad = true;
                 achievementChanged = true;
+                const message = `${newHolder.name} has been awarded Longest Road!`;
+                this.game.turnLog.addMessage("SVP", message);
             }
         } else {
             const currentLength =
@@ -230,6 +232,8 @@ class VictoryPointManager {
                 currentHolder.hasLongestRoad = false;
                 newHolder.hasLongestRoad = true;
                 achievementChanged = true;
+                const message = `${newHolder.name} has taken Longest Road from ${currentHolder.name}!`;
+                this.game.turnLog.addMessage("SVP", message);
             }
         }
 
@@ -270,6 +274,8 @@ class VictoryPointManager {
             if (newHolder) {
                 newHolder.hasLargestArmy = true;
                 achievementChanged = true;
+                const message = `${newHolder.name} has been awarded Largest Army!`;
+                this.game.turnLog.addMessage("SVP", message);
             }
         } else {
             const currentKnights =
@@ -298,6 +304,8 @@ class VictoryPointManager {
                 currentHolder.hasLargestArmy = false;
                 newHolder.hasLargestArmy = true;
                 achievementChanged = true;
+                const message = `${newHolder.name} has taken Largest Army from ${currentHolder.name}!`;
+                this.game.turnLog.addMessage("SVP", message);
             }
         }
 

@@ -117,6 +117,14 @@ class SetupManager {
         // First player in the forward setup order
         // gets the first normal gameplay turn.
         this.game.currentPlayerId = this.game.setupTurnOrder[0];
+
+        // get next player for turn log
+        const nextPlayer = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        // new turn log entry
+        this.game.turnLog.addTurn(nextPlayer);
     }
 }
 

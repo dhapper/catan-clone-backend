@@ -11,6 +11,7 @@ const ProductionManager = require("./ProductionManager");
 const TurnManager = require("./TurnManager");
 const VictoryPointManager = require("./VictoryPointManager");
 const DevCardManager = require("./DevCardManager");
+const TurnLog = require("./TurnLog");
 
 class Game {
     constructor() {
@@ -64,6 +65,8 @@ class Game {
         this.turn = new TurnManager(this);
         this.victoryPoints = new VictoryPointManager(this);
         this.devCards = new DevCardManager(this);
+
+        this.turnLog = new TurnLog();
     }
 
     addPlayer(player) {
@@ -368,6 +371,7 @@ class Game {
         this.subphase = SETUP_SUBPHASES.ROLL_FOR_TURN_ORDER;
 
         this.winner = null;
+        this.turnLog = new TurnLog();
     }
 
     checkWinner() {

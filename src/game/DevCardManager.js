@@ -48,6 +48,8 @@ class DevCardManager {
             boughtThisTurn: true
         });
 
+        this.game.turnLog.addMessage("INFRA", "Development card purchased");
+
         this.game.victoryPoints.updatePlayerVictoryPoints(playerId);
 
         return true;
@@ -132,6 +134,8 @@ class DevCardManager {
             return false;
         }
 
+        this.game.turnLog.addMessage("DEV", "Knight card played!");
+
         player.devCards.splice(knightIndex, 1);
         player.devCardPlayed = true;
         player.knightsPlayed++;
@@ -162,6 +166,8 @@ class DevCardManager {
         if (cardIndex === -1) {
             return false;
         }
+
+        this.game.turnLog.addMessage("DEV", "Road Building played!");
 
         player.devCards.splice(cardIndex, 1);
 
@@ -217,6 +223,7 @@ class DevCardManager {
             }
         }
 
+        this.game.turnLog.addMessage("DEV", `Monopoly played! All ${resource} resources collected`);
         player.devCardPlayed = true;
 
         return true;
@@ -303,6 +310,17 @@ class DevCardManager {
         }
 
         player.inventionActive = false;
+
+        const receivedResources = validResources
+            .filter(resource => resources[resource] > 0)
+            .map(resource => `${resource} x${resources[resource]}`)
+            .join(", ");
+
+        this.game.turnLog.addMessage(
+            "DEV",
+            `Invention played! Player received ${receivedResources}`
+        );
+
 
         return true;
     }

@@ -56,6 +56,14 @@ class TurnManager {
         this.game.diceRoll = null;
         this.game.subphase = GAMEPLAY_SUBPHASES.PRODUCTION;
 
+        // get next player for turn log
+        const nextPlayer = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        // new turn log entry
+        this.game.turnLog.addTurn(nextPlayer);
+
         return true;
     }
 }
