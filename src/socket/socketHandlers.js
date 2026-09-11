@@ -1,5 +1,4 @@
 const Player = require("../game/Player");
-const { checkTurnTimer, toggleTurnTimer } = require("../game/TurnTimer");
 const {
     GAME_PHASES,
     SETUP_SUBPHASES,
@@ -13,7 +12,7 @@ const {
 function registerSocketHandlers(io, game) {
     function broadcastGameState() {
 
-        checkTurnTimer(io, game, broadcastGameState);
+        game.timer.check(io, broadcastGameState);
 
         io.emit("game:state", {
             players: [...game.players.values()],
@@ -36,9 +35,9 @@ function registerSocketHandlers(io, game) {
             boardLayout: game.boardLayout,
             pieceLimits: game.pieceLimits,
             winner: game.winner,
-            turnEndsAt: game.turnEndsAt,
-            timerPaused: game.timerPaused,
-            timerRemainingMs: game.timerRemainingMs,
+            turnEndsAt: game.timer.turnEndsAt,
+            timerPaused: game.timer.timerPaused,
+            timerRemainingMs: game.timer.timerRemainingMs,
             turnLog: game.turnLog.entries
         });
     }
@@ -258,7 +257,7 @@ function registerSocketHandlers(io, game) {
         });
 
         socket.on("game:toggleTimer", () => {
-            if (!socket.playerId || !toggleTurnTimer(game)) {
+            if (!socket.playerId || !game.timer.toggle()) {
                 return;
             }
 

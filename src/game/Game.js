@@ -12,6 +12,7 @@ const TurnManager = require("./TurnManager");
 const VictoryPointManager = require("./VictoryPointManager");
 const DevCardManager = require("./DevCardManager");
 const TurnLog = require("./TurnLog");
+const TurnTimer = require("./TurnTimer");
 
 class Game {
     constructor() {
@@ -22,8 +23,7 @@ class Game {
         this.bankResourceCount = 19;
         this.currentPlayerId = null;
         this.diceRoll = null;
-        this.timerPaused = false;
-        this.timerRemainingMs = null;
+        this.timer = new TurnTimer(this);
         this.currentTrade = null;
         this.discardRequirements = new Map();
         this.robberTileId = null;
@@ -372,6 +372,7 @@ class Game {
 
         this.winner = null;
         this.turnLog = new TurnLog();
+        this.timer.reset();
     }
 
     checkWinner() {

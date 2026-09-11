@@ -1,80 +1,121 @@
 const { GAME_PHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
 const { emitNextTurnStartSound } = require("../services/SoundManager");
 
-let turnTimeout = null;
-let timedPlayerId = null;
-let remainingMs = null;
 const TURN_DURATION_MS = 3 * 60 * 1000;
 
-function checkTurnTimer(io, game, broadcastGameState) {
-    if (game.phase !== GAME_PHASES.GAMEPLAY || game.winner) {
-        if (turnTimeout) clearTimeout(turnTimeout);
-        turnTimeout = null;
-        timedPlayerId = null;
-        remainingMs = null;
-        game.timerPaused = false;
-        game.timerRemainingMs = null;
-        game.turnEndsAt = null;
-        return;
+class TurnTimer {
+    constructor(game) {
+        this.game = game;
+        this.turnTimeout = null;
+        this.timedPlayerId = null;
+        this.remainingMs = null;
+        this.timerPaused = false;
+        this.timerRemainingMs = null;
+        this.turnEndsAt = null;
     }
 
-    if (game.timerPaused) {
-        return;
-    }
+    check(io, broadcastGameState) {
+        const game = this.game;
 
-    if (game.currentPlayerId === timedPlayerId) {
-        return;
-    }
+        if (game.phase !== GAME_PHASES.GAMEPLAY || game.winner) {
+            if (this.turnTimeout) {
+                clearTimeout(this.turnTimeout);
+            }
 
-    if (turnTimeout) clearTimeout(turnTimeout);
-    timedPlayerId = game.currentPlayerId;
-    remainingMs = game.timerRemainingMs ?? TURN_DURATION_MS;
-    game.timerRemainingMs = null;
-    game.turnEndsAt = Date.now() + remainingMs;
+            this.turnTimeout = null;
+            this.timedPlayerId = null;
+            this.remainingMs = null;
 
-    turnTimeout = setTimeout(() => {
-        remainingMs = null;
-        game.timerRemainingMs = null;
+            this.timerPaused = false;
+            this.timerRemainingMs = null;
+            this.turnEndsAt = null;
 
-        if (game.subphase === GAMEPLAY_SUBPHASES.PRODUCTION) {
-            game.rollProductionDice();
-            io.emit("game:sound", "diceRoll");
+            return;
         }
 
-        if (game.endTurn()) {
-            emitNextTurnStartSound(io, game);
+        if (this.timerPaused) {
+            return;
         }
 
-        broadcastGameState();
-    }, remainingMs);
-}
+        if (game.currentPlayerId === this.timedPlayerId) {
+            return;
+        }
 
-function toggleTurnTimer(game) {
-    if (game.phase !== GAME_PHASES.GAMEPLAY || game.winner) {
-        return false;
+        if (this.turnTimeout) {
+            clearTimeout(this.turnTimeout);
+        }
+
+        this.timedPlayerId = game.currentPlayerId;
+        this.remainingMs = this.timerRemainingMs ?? TURN_DURATION_MS;
+
+        this.timerRemainingMs = null;
+        this.turnEndsAt = Date.now() + this.remainingMs;
+
+        this.turnTimeout = setTimeout(() => {
+            this.remainingMs = null;
+            this.timerRemainingMs = null;
+
+            if (game.subphase === GAMEPLAY_SUBPHASES.PRODUCTION) {
+                game.rollProductionDice();
+                io.emit("game:sound", "diceRoll");
+            }
+
+            if (game.endTurn()) {
+                emitNextTurnStartSound(io, game);
+            }
+
+            broadcastGameState();
+        }, this.remainingMs);
     }
 
-    if (game.timerPaused) {
-        game.timerPaused = false;
-        game.turnEndsAt = null;
-        game.timerRemainingMs = remainingMs;
-        timedPlayerId = null;
-        remainingMs = null;
+    toggle() {
+        const game = this.game;
+
+        if (game.phase !== GAME_PHASES.GAMEPLAY || game.winner) {
+            return false;
+        }
+
+        if (game.timerPaused) {
+            this.timerPaused = false;
+            this.turnEndsAt = null;
+            this.timerRemainingMs = this.remainingMs;
+
+            this.timedPlayerId = null;
+            this.remainingMs = null;
+
+            return true;
+        }
+
+        this.timerRemainingMs = Math.max(
+            0,
+            (this.turnEndsAt ?? Date.now()) - Date.now()
+        );
+
+        this.remainingMs = this.timerRemainingMs;
+        this.timerPaused = true;
+        this.turnEndsAt = null;
+
+        if (this.turnTimeout) {
+            clearTimeout(this.turnTimeout);
+        }
+
+        this.turnTimeout = null;
+
         return true;
     }
 
-    game.timerRemainingMs = Math.max(
-        0,
-        (game.turnEndsAt ?? Date.now()) - Date.now()
-    );
-    remainingMs = game.timerRemainingMs;
-    game.timerPaused = true;
-    game.turnEndsAt = null;
+    reset() {
+        if (this.turnTimeout) {
+            clearTimeout(this.turnTimeout);
+        }
 
-    if (turnTimeout) clearTimeout(turnTimeout);
-    turnTimeout = null;
-
-    return true;
+        this.turnTimeout = null;
+        this.timedPlayerId = null;
+        this.remainingMs = null;
+        this.timerPaused = false;
+        this.timerRemainingMs = null;
+        this.turnEndsAt = null;
+    }
 }
 
-module.exports = { checkTurnTimer, toggleTurnTimer };
+module.exports = TurnTimer;
