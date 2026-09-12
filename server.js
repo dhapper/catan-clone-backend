@@ -21,7 +21,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const game = new Game();
+const games = new Map();
+const game = new Game("ABCD");
+games.set(game.lobbyCode, game);
 
 app.get("/api/hello", (req, res) => {
     res.json({
@@ -29,9 +31,9 @@ app.get("/api/hello", (req, res) => {
     });
 });
 
-app.use("/api", createGameRoutes(game, io));
+app.use("/api", createGameRoutes(games, io));
 
-registerSocketHandlers(io, game);
+registerSocketHandlers(io, games);
 
 httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Backend running on port ${PORT}`);

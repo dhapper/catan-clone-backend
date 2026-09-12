@@ -64,7 +64,7 @@ class TurnTimer {
                 emitNextTurnStartSound(io, game);
             }
 
-            broadcastGameState();
+            broadcastGameState(game);
         }, this.remainingMs);
     }
 

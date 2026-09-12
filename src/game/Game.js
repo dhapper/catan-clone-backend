@@ -15,7 +15,8 @@ const TurnLog = require("./TurnLog");
 const TurnTimer = require("./TurnTimer");
 
 class Game {
-    constructor() {
+    constructor(lobbyCode) {
+        this.lobbyCode = lobbyCode;
         this.boardLayout = [3, 4, 5, 4, 3];
         this.board = generateBoard(this.boardLayout);
         this.players = new Map();

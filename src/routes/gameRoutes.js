@@ -3,9 +3,13 @@ const { emitAchievementSound } = require("../services/SoundManager");
 
 const router = express.Router();
 
-function createGameRoutes(game, io) {
-    function broadcastGameState() {
+function createGameRoutes(games, io) {
+
+    const game = games.get("ABCD");
+
+    function broadcastGameState(game) {
         io.emit("game:state", {
+            lobbyCode: game.lobbyCode,
             players: [...game.players.values()],
             colors: game.colors,
             phase: game.phase,
@@ -34,7 +38,16 @@ function createGameRoutes(game, io) {
         });
     }
 
-    router.get("/game", (req, res) => {
+    router.get("/game/:lobbyCode", (req, res) => {
+        const { lobbyCode } = req.params;
+        const game = games.get(lobbyCode);
+
+        if (!game) {
+            return res.status(404).json({
+                error: "Lobby not found"
+            });
+        }
+
         res.json({
             rowSizes: game.board.rowSizes,
             hexSize: game.board.hexSize,
@@ -52,7 +65,14 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/build/settlement", (req, res) => {
+    router.post("/game/:lobbyCode/build/settlement", (req, res) => {
+
+        const game = getGameOr404(req, res);
+
+        if (!game) {
+            return;
+        }
+
         const { vertexId } = req.body;
 
         console.log("BUILD SETTLEMENT REQUEST:", {
@@ -84,7 +104,7 @@ function createGameRoutes(game, io) {
             emitAchievementSound(io);
         }
 
-        broadcastGameState();
+        broadcastGameState(game);
 
         res.json({
             success: true,
@@ -92,7 +112,13 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/build/road", (req, res) => {
+    router.post("/game/:lobbyCode/build/road", (req, res) => {
+        const game = getGameOr404(req, res);
+
+        if (!game) {
+            return;
+        }
+
         const { edgeId } = req.body;
 
         const edge = game.board.edges.get(edgeId);
@@ -117,7 +143,7 @@ function createGameRoutes(game, io) {
             emitAchievementSound(io);
         }
 
-        broadcastGameState();
+        broadcastGameState(game);
 
         res.json({
             success: true,
@@ -125,11 +151,18 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/reset", (req, res) => {
+    router.post("/game/:lobbyCode/reset", (req, res) => {
+
+        const game = getGameOr404(req, res);
+
+        if (!game) {
+            return;
+        }
+
         game.reset();
         io.emit("game:reset");
         io.emit("game:sound", "reset");
-        broadcastGameState();
+        broadcastGameState(game);
 
         res.json({
             success: true,
@@ -137,7 +170,14 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/build/city", (req, res) => {
+    router.post("/game/:lobbyCode/build/city", (req, res) => {
+
+        const game = getGameOr404(req, res);
+
+        if (!game) {
+            return;
+        }
+
         const { vertexId } = req.body;
 
         const vertex = game.board.vertices.get(vertexId);
@@ -156,13 +196,27 @@ function createGameRoutes(game, io) {
 
         io.emit("game:sound", "place");
 
-        broadcastGameState();
+        broadcastGameState(game);
 
         res.json({
             success: true,
             vertex
         });
     });
+
+    function getGameOr404(req, res) {
+        const { lobbyCode } = req.params;
+        const game = games.get(lobbyCode);
+
+        if (!game) {
+            res.status(404).json({
+                error: "Lobby not found"
+            });
+            return null;
+        }
+
+        return game;
+    }
 
     return router;
 }

@@ -9,12 +9,13 @@ const {
     emitAchievementSound
 } = require("../services/SoundManager");
 
-function registerSocketHandlers(io, game) {
-    function broadcastGameState() {
+function registerSocketHandlers(io, games) {
+    function broadcastGameState(game) {
 
         game.timer.check(io, broadcastGameState);
 
         io.emit("game:state", {
+            lobbyCode: game.lobbyCode,
             players: [...game.players.values()],
             colors: game.colors,
             phase: game.phase,
@@ -44,10 +45,23 @@ function registerSocketHandlers(io, game) {
 
     io.on("connection", (socket) => {
         socket.playerId = null;
+        socket.lobbyCode = "ABCD";
 
-        console.log("Client connected:", socket.id);
+        const game = games.get(socket.lobbyCode);
 
-        broadcastGameState();
+        if (!game) {
+            console.log("Lobby not found:", socket.lobbyCode);
+            return;
+        }
+
+        console.log(
+            "Client connected:",
+            socket.id,
+            "Lobby:",
+            socket.lobbyCode
+        );
+
+        broadcastGameState(game);
 
         socket.on("player:create", ({ name }) => {
             if (socket.playerId) {
@@ -82,7 +96,7 @@ function registerSocketHandlers(io, game) {
                 player
             });
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("player:rename", ({ name }) => {
@@ -98,7 +112,7 @@ function registerSocketHandlers(io, game) {
 
             player.name = name.trim();
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("player:changeColor", (color) => {
@@ -128,7 +142,7 @@ function registerSocketHandlers(io, game) {
 
             player.color = color;
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("player:claim", (playerId) => {
@@ -162,7 +176,7 @@ function registerSocketHandlers(io, game) {
                 player
             });
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("disconnect", () => {
@@ -175,7 +189,7 @@ function registerSocketHandlers(io, game) {
                     player.connected = false;
                 }
 
-                broadcastGameState();
+                broadcastGameState(game);
             }
         });
 
@@ -197,7 +211,7 @@ function registerSocketHandlers(io, game) {
             game.phase = GAME_PHASES.SETUP;
             game.devCards.initializeDeck();
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:rollForTurnOrder", () => {
@@ -217,7 +231,7 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:rollProductionDice", () => {
@@ -235,7 +249,7 @@ function registerSocketHandlers(io, game) {
 
             io.emit("game:sound", "diceRoll");
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:endTurn", () => {
@@ -253,7 +267,7 @@ function registerSocketHandlers(io, game) {
 
             emitNextTurnStartSound(io, game);
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:toggleTimer", () => {
@@ -261,7 +275,7 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:stealResource", ({ victimId }) => {
@@ -285,7 +299,7 @@ function registerSocketHandlers(io, game) {
 
             game.robberVictims = [];
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:discardResources", ({ resources }) => {
@@ -307,7 +321,7 @@ function registerSocketHandlers(io, game) {
                 resources
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:moveRobber", ({ tileId }) => {
@@ -332,7 +346,7 @@ function registerSocketHandlers(io, game) {
 
             io.emit("game:sound", "place");
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:bankTrade", ({ offered, wanted }) => {
@@ -348,7 +362,7 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:createTrade", ({ offered, wanted }) => {
@@ -371,7 +385,7 @@ function registerSocketHandlers(io, game) {
 
             console.log("CREATE TRADE SUCCESS:", game.currentTrade);
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:acceptTrade", () => {
@@ -389,7 +403,7 @@ function registerSocketHandlers(io, game) {
                 socket.playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:declineTrade", () => {
@@ -407,7 +421,7 @@ function registerSocketHandlers(io, game) {
                 socket.playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:resolveTrade", ({ playerId }) => {
@@ -434,7 +448,7 @@ function registerSocketHandlers(io, game) {
                 playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:cancelTrade", () => {
@@ -452,7 +466,7 @@ function registerSocketHandlers(io, game) {
                 socket.playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:buyDevCard", () => {
@@ -474,7 +488,7 @@ function registerSocketHandlers(io, game) {
                 socket.playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:playKnight", () => {
@@ -502,7 +516,7 @@ function registerSocketHandlers(io, game) {
                 socket.playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:playRoadBuilding", () => {
@@ -524,7 +538,7 @@ function registerSocketHandlers(io, game) {
                 socket.playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:playMonopoly", ({ resource }) => {
@@ -547,7 +561,7 @@ function registerSocketHandlers(io, game) {
                 resource
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:playInvention", () => {
@@ -569,7 +583,7 @@ function registerSocketHandlers(io, game) {
                 socket.playerId
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:resolveInvention", ({ resources }) => {
@@ -592,24 +606,24 @@ function registerSocketHandlers(io, game) {
                 resources
             );
 
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         // game settings
 
         socket.on("game:setBankResourceCount", (amount) => {
             game.setBankResourceCount(amount);
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:setRobberSafetyNumber", (number) => {
             game.setRobberSafetyNumber(number);
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:setVictoryPointsNeeded", (amount) => {
             game.setVictoryPointsNeeded(amount);
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:setBoardLayout", (layout) => {
@@ -622,22 +636,22 @@ function registerSocketHandlers(io, game) {
             }
 
             game.setBoardLayout(boardLayout);
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:regenerateBoard", () => {
             game.regenerateBoard();
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:reset", () => {
             game.reset(true);
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
         socket.on("game:setPieceLimit", ({ piece, value }) => {
             game.setPieceLimit(piece, value);
-            broadcastGameState();
+            broadcastGameState(game);
         });
 
     });
