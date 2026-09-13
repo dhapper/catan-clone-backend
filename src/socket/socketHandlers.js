@@ -14,7 +14,7 @@ function registerSocketHandlers(io, games) {
 
         game.timer.check(io, broadcastGameState);
 
-        io.emit("game:state", {
+        io.to(`lobby:${game.lobbyCode}`).emit("game:state", {
             lobbyCode: game.lobbyCode,
             players: [...game.players.values()],
             colors: game.colors,
@@ -53,6 +53,9 @@ function registerSocketHandlers(io, games) {
             console.log("Lobby not found:", socket.lobbyCode);
             return;
         }
+
+        // socket joins room
+        socket.join(`lobby:${socket.lobbyCode}`);
 
         console.log(
             "Client connected:",
@@ -247,7 +250,7 @@ function registerSocketHandlers(io, games) {
                 return;
             }
 
-            io.emit("game:sound", "diceRoll");
+            io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "diceRoll");
 
             broadcastGameState(game);
         });
@@ -344,7 +347,7 @@ function registerSocketHandlers(io, games) {
                 tileId
             );
 
-            io.emit("game:sound", "place");
+            io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "place");
 
             broadcastGameState(game);
         });
@@ -508,7 +511,7 @@ function registerSocketHandlers(io, games) {
             }
 
             if (result.achievementChanged) {
-                emitAchievementSound(io);
+                emitAchievementSound(io, game);
             }
 
             console.log(

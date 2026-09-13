@@ -57,7 +57,7 @@ class TurnTimer {
 
             if (game.subphase === GAMEPLAY_SUBPHASES.PRODUCTION) {
                 game.rollProductionDice();
-                io.emit("game:sound", "diceRoll");
+                io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "diceRoll");
             }
 
             if (game.endTurn()) {

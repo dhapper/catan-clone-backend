@@ -5,10 +5,10 @@ const router = express.Router();
 
 function createGameRoutes(games, io) {
 
-    const game = games.get("ABCD");
+    // const game = games.get("ABCD");
 
     function broadcastGameState(game) {
-        io.emit("game:state", {
+        io.to(`lobby:${game.lobbyCode}`).emit("game:state", {
             lobbyCode: game.lobbyCode,
             players: [...game.players.values()],
             colors: game.colors,
@@ -98,10 +98,10 @@ function createGameRoutes(games, io) {
             });
         }
 
-        io.emit("game:sound", "place");
+        io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "place");
 
         if (result.achievementChanged) {
-            emitAchievementSound(io);
+            emitAchievementSound(io, game);
         }
 
         broadcastGameState(game);
@@ -137,10 +137,10 @@ function createGameRoutes(games, io) {
             });
         }
 
-        io.emit("game:sound", "place");
+        io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "place");
 
         if (result.achievementChanged) {
-            emitAchievementSound(io);
+            emitAchievementSound(io, game);
         }
 
         broadcastGameState(game);
@@ -160,8 +160,8 @@ function createGameRoutes(games, io) {
         }
 
         game.reset();
-        io.emit("game:reset");
-        io.emit("game:sound", "reset");
+        io.to(`lobby:${game.lobbyCode}`).emit("game:reset");
+        io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "reset");
         broadcastGameState(game);
 
         res.json({
@@ -194,7 +194,7 @@ function createGameRoutes(games, io) {
             });
         }
 
-        io.emit("game:sound", "place");
+        io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "place");
 
         broadcastGameState(game);
 
