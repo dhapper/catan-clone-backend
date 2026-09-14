@@ -22,8 +22,8 @@ app.use(cors());
 app.use(express.json());
 
 const games = new Map();
-const game = new Game("ABCD");
-games.set(game.lobbyCode, game);
+// const game = new Game("ABCD");
+// games.set(game.lobbyCode, game);
 
 app.get("/api/hello", (req, res) => {
     res.json({

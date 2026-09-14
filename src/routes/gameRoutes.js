@@ -159,14 +159,16 @@ function createGameRoutes(games, io) {
             return;
         }
 
-        game.reset();
-        io.to(`lobby:${game.lobbyCode}`).emit("game:reset");
-        io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "reset");
-        broadcastGameState(game);
+        // game.reset();
+        // io.to(`lobby:${game.lobbyCode}`).emit("game:reset");
+        // io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "reset");
+        // broadcastGameState(game);
+
+        games.delete(game.lobbyCode);
 
         res.json({
             success: true,
-            message: "Game and players fully reset"
+            message: "Reset: lobby destroyed"
         });
     });
 

@@ -1,4 +1,5 @@
 const Player = require("../game/Player");
+const Game = require("../game/Game");
 const {
     GAME_PHASES,
     SETUP_SUBPHASES,
@@ -45,26 +46,146 @@ function registerSocketHandlers(io, games) {
 
     io.on("connection", (socket) => {
         socket.playerId = null;
-        socket.lobbyCode = "ABCD";
+        socket.lobbyCode = null;
 
-        const game = games.get(socket.lobbyCode);
-
-        if (!game) {
-            console.log("Lobby not found:", socket.lobbyCode);
-            return;
-        }
-
-        // socket joins room
-        socket.join(`lobby:${socket.lobbyCode}`);
+        let game = null;
 
         console.log(
             "Client connected:",
-            socket.id,
-            "Lobby:",
-            socket.lobbyCode
+            socket.id
         );
+        // socket.playerId = null;
+        // socket.lobbyCode = null;
 
-        broadcastGameState(game);
+        // const game = games.get(socket.lobbyCode);
+
+        // if (!game) {
+        //     console.log("Lobby not found:", socket.lobbyCode);
+        //     return;
+        // }
+
+        // // socket joins room
+        // socket.join(`lobby:${socket.lobbyCode}`);
+
+        // console.log(
+        //     "Client connected:",
+        //     socket.id,
+        //     "Lobby:",
+        //     socket.lobbyCode
+        // );
+
+        // broadcastGameState(game);
+
+        socket.on("lobby:create", () => {
+
+            const lobbyCodes = [
+                // "TREE",
+                // "MOON",
+                // "FISH",
+                // "BEAR",
+                // "STAR",
+                // "WOLF",
+                // "FIRE",
+                // "BLUE",
+                // "GOLD",
+                // "SNOW",
+
+                "SAKA",
+                "RICE",
+                "RAYA",
+                "GYOK",
+                "NONI",
+                "OZIL",
+            ];
+
+            const availableCodes = lobbyCodes.filter(
+                lobbyCode => !games.has(lobbyCode)
+            );
+
+            if (availableCodes.length === 0) {
+                socket.emit("lobby:create:error", {
+                    error: "No new lobbies are available"
+                });
+                return;
+            }
+
+            const lobbyCode =
+                availableCodes[
+                Math.floor(Math.random() * availableCodes.length)
+                ];
+
+            game = new Game(lobbyCode);
+            games.set(lobbyCode, game);
+
+            socket.playerId = null;
+            socket.lobbyCode = lobbyCode;
+            socket.join(`lobby:${lobbyCode}`);
+
+            console.log(
+                "Lobby created:",
+                lobbyCode,
+                "by socket:",
+                socket.id
+            );
+
+            broadcastGameState(game);
+        });
+
+        socket.on("lobby:join", (lobbyCode) => {
+            lobbyCode = lobbyCode.trim().toUpperCase();
+
+            const existingGame = games.get(lobbyCode);
+
+            if (!existingGame) {
+                socket.emit("lobby:join:error", {
+                    error: "Lobby not found"
+                });
+                return;
+            }
+
+            game = existingGame;
+            socket.lobbyCode = lobbyCode;
+            socket.join(`lobby:${lobbyCode}`);
+
+            console.log(
+                "Lobby joined:",
+                lobbyCode,
+                "by socket:",
+                socket.id
+            );
+
+            broadcastGameState(game);
+        });
+
+        socket.on("lobby:exit", () => {
+            if (!game || !socket.lobbyCode) {
+                return;
+            }
+
+            const lobby = game;
+            const lobbyCode = socket.lobbyCode;
+
+            if (socket.playerId) {
+                lobby.players.delete(socket.playerId);
+            }
+
+            socket.playerId = null;
+
+            const room = io.sockets.adapter.rooms.get(`lobby:${lobbyCode}`);
+            const connectedSockets = room ? room.size : 0;
+
+            socket.leave(`lobby:${lobbyCode}`);
+            socket.lobbyCode = null;
+            game = null;
+
+            if (connectedSockets <= 1) {
+                games.delete(lobbyCode);
+                console.log("Lobby destroyed:", lobbyCode);
+                return;
+            }
+
+            broadcastGameState(lobby);
+        });
 
         socket.on("player:create", ({ name }) => {
             if (socket.playerId) {
