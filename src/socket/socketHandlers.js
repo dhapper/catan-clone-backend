@@ -178,9 +178,18 @@ function registerSocketHandlers(io, games) {
             socket.lobbyCode = null;
             game = null;
 
+            console.log(
+                "Lobby left:",
+                lobbyCode,
+                "by socket:",
+                socket.id
+            );
+
             if (connectedSockets <= 1) {
                 games.delete(lobbyCode);
-                console.log("Lobby destroyed:", lobbyCode);
+                console.log(
+                    `Lobby "${lobbyCode}" has been destroyed`
+                );
                 return;
             }
 
@@ -304,17 +313,45 @@ function registerSocketHandlers(io, games) {
         });
 
         socket.on("disconnect", () => {
-            console.log("Client disconnected:", socket.id);
+            const lobby = game;
+            const lobbyCode = socket.lobbyCode;
+
+            console.log(
+                "Client disconnected:",
+                socket.id,
+                "Lobby:",
+                lobbyCode
+            );
+
+            if (!lobby || !lobbyCode) {
+                return;
+            }
 
             if (socket.playerId) {
-                const player = game.players.get(socket.playerId);
+                const player = lobby.players.get(socket.playerId);
 
                 if (player) {
                     player.connected = false;
                 }
-
-                broadcastGameState(game);
             }
+
+            const room = io.sockets.adapter.rooms.get(
+                `lobby:${lobbyCode}`
+            );
+
+            const connectedSockets = room ? room.size : 0;
+
+            if (connectedSockets === 0) {
+                games.delete(lobbyCode);
+
+                console.log(
+                    `Lobby "${lobbyCode}" has been destroyed`
+                );
+
+                return;
+            }
+
+            broadcastGameState(lobby);
         });
 
         socket.on("game:start", () => {
@@ -398,6 +435,8 @@ function registerSocketHandlers(io, games) {
             if (!socket.playerId || !game.timer.toggle()) {
                 return;
             }
+
+            game.timer.check(io, broadcastGameState);
 
             broadcastGameState(game);
         });
@@ -728,6 +767,28 @@ function registerSocketHandlers(io, games) {
                 "INVENTION RESOLVED:",
                 socket.playerId,
                 resources
+            );
+
+            broadcastGameState(game);
+        });
+
+        socket.on("game:cancelInvention", () => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.cancelInvention()) {
+                console.log("INVENTION CANCEL REJECTED");
+                return;
+            }
+
+            console.log(
+                "INVENTION CANCELLED:",
+                socket.playerId
             );
 
             broadcastGameState(game);

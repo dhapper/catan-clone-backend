@@ -46,10 +46,15 @@ class TurnManager {
             }
         }
 
-        // one card per turn reset
         if (currentPlayer) {
+            // one card per turn reset
             currentPlayer.devCardPlayed = false;
+            // disable leftover roadbuilding
+            currentPlayer.roadBuildingRemaining = 0;
         }
+
+        // clear active trade when turn ends
+        this.game.currentTrade = null;
 
         this.game.currentPlayerId = forwardOrder[nextIndex];
 

@@ -212,6 +212,10 @@ class Game {
         );
     }
 
+    autoMoveRobber() {
+        return this.robber.autoMoveRobber();
+    }
+
     // DevCardManager.js
 
     playKnight() {
@@ -232,6 +236,10 @@ class Game {
 
     resolveInvention(resources) {
         return this.devCards.resolveInvention(resources);
+    }
+
+    cancelInvention() {
+        return this.devCards.cancelInvention();
     }
 
     // TradeManager.js

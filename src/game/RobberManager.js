@@ -230,6 +230,62 @@ class RobberManager {
 
         return true;
     }
+
+    autoMoveRobber() {
+        if (this.game.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (
+            this.game.subphase !==
+            GAMEPLAY_SUBPHASES.ROBBER_PLACEMENT
+        ) {
+            return false;
+        }
+
+        const currentPlayerId = this.game.currentPlayerId;
+
+        const eligibleTiles = [];
+
+        for (const tile of this.game.board.tiles.values()) {
+            // Cannot stay on the current robber tile.
+            if (tile.id === this.game.robberTileId) {
+                continue;
+            }
+
+            let adjacentToCurrentPlayer = false;
+
+            for (const vertexId of tile.vertices) {
+                const vertex =
+                    this.game.board.vertices.get(vertexId);
+
+                if (
+                    vertex?.building?.playerId ===
+                    currentPlayerId
+                ) {
+                    adjacentToCurrentPlayer = true;
+                    break;
+                }
+            }
+
+            if (!adjacentToCurrentPlayer) {
+                eligibleTiles.push(tile.id);
+            }
+        }
+
+        if (eligibleTiles.length === 0) {
+            return false;
+        }
+
+        const tileId =
+            eligibleTiles[
+            Math.floor(
+                Math.random() * eligibleTiles.length
+            )
+            ];
+
+        return this.moveRobber(tileId);
+    }
 }
 
 module.exports = RobberManager;

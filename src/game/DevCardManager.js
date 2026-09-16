@@ -208,8 +208,6 @@ class DevCardManager {
             return false;
         }
 
-        player.devCards.splice(cardIndex, 1);
-
         for (const otherPlayer of this.game.players.values()) {
             if (otherPlayer.id === playerId) {
                 continue;
@@ -222,6 +220,8 @@ class DevCardManager {
                 player.addResource(resource, amount);
             }
         }
+
+        player.devCards.splice(cardIndex, 1);
 
         this.game.turnLog.addMessage("DEV", `Monopoly played! All ${resource} resources collected`);
         player.devCardPlayed = true;
@@ -238,17 +238,15 @@ class DevCardManager {
 
         const player = this.game.players.get(playerId);
 
-        const cardIndex = player.devCards.findIndex(
+        const hasInvention = player.devCards.some(
             card =>
                 card.type === "invention" &&
                 !card.boughtThisTurn
         );
 
-        if (cardIndex === -1) {
+        if (!hasInvention) {
             return false;
         }
-
-        player.devCards.splice(cardIndex, 1);
 
         player.devCardPlayed = true;
         player.inventionActive = true;
@@ -265,6 +263,16 @@ class DevCardManager {
         }
 
         if (!player.inventionActive) {
+            return false;
+        }
+
+        const cardIndex = player.devCards.findIndex(
+            card =>
+                card.type === "invention" &&
+                !card.boughtThisTurn
+        );
+
+        if (cardIndex === -1) {
             return false;
         }
 
@@ -309,6 +317,7 @@ class DevCardManager {
             }
         }
 
+        player.devCards.splice(cardIndex, 1);
         player.inventionActive = false;
 
         const receivedResources = validResources
@@ -321,6 +330,24 @@ class DevCardManager {
             `Invention played! Player received ${receivedResources}`
         );
 
+
+        return true;
+    }
+
+    cancelInvention() {
+        const playerId = this.game.currentPlayerId;
+        const player = this.game.players.get(playerId);
+
+        if (!player) {
+            return false;
+        }
+
+        if (!player.inventionActive) {
+            return false;
+        }
+
+        player.inventionActive = false;
+        player.devCardPlayed = false;
 
         return true;
     }

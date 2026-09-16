@@ -1,7 +1,8 @@
 const { GAME_PHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
 const { emitNextTurnStartSound } = require("../services/SoundManager");
 
-const TURN_DURATION_MS = 3 * 60 * 1000;
+// const TURN_DURATION_MS = 3 * 60 * 1000;
+const TURN_DURATION_MS = 1 * 30 * 1000;
 
 class TurnTimer {
     constructor(game) {
@@ -60,6 +61,16 @@ class TurnTimer {
                 io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "diceRoll");
             }
 
+            if (game.subphase === GAMEPLAY_SUBPHASES.ROBBER_PLACEMENT) {
+                game.autoMoveRobber();
+            }
+
+            // cancel active invention cards
+            const currentPlayer = game.players.get(game.currentPlayerId);
+            if (currentPlayer?.inventionActive) {
+                game.cancelInvention();
+            }
+
             if (game.endTurn()) {
                 emitNextTurnStartSound(io, game);
             }
@@ -75,7 +86,7 @@ class TurnTimer {
             return false;
         }
 
-        if (game.timerPaused) {
+        if (this.timerPaused) {
             this.timerPaused = false;
             this.turnEndsAt = null;
             this.timerRemainingMs = this.remainingMs;
