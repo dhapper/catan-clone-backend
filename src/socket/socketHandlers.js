@@ -377,7 +377,7 @@ function registerSocketHandlers(io, games) {
 
         socket.on("game:rollForTurnOrder", () => {
             if (!socket.playerId) {
-                return;
+                return;s
             }
 
             if (game.phase !== GAME_PHASES.SETUP) {
@@ -391,6 +391,11 @@ function registerSocketHandlers(io, games) {
             if (!game.setup.rollForTurnOrder(socket.playerId)) {
                 return;
             }
+
+            socket.to(`lobby:${game.lobbyCode}`).emit(
+                "game:sound",
+                "place"
+            );
 
             broadcastGameState(game);
         });

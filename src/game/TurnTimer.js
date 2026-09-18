@@ -1,8 +1,8 @@
 const { GAME_PHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
 const { emitNextTurnStartSound } = require("../services/SoundManager");
 
-// const TURN_DURATION_MS = 3 * 60 * 1000;
-const TURN_DURATION_MS = 1 * 30 * 1000;
+const TURN_DURATION_MS = 3 * 60 * 1000;
+// const TURN_DURATION_MS = 1 * 30 * 1000;
 
 class TurnTimer {
     constructor(game) {
