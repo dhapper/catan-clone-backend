@@ -17,6 +17,7 @@ function registerSocketHandlers(io, games) {
 
         io.to(`lobby:${game.lobbyCode}`).emit("game:state", {
             lobbyCode: game.lobbyCode,
+            config: game.config,
             players: [...game.players.values()],
             colors: game.colors,
             phase: game.phase,
@@ -377,7 +378,7 @@ function registerSocketHandlers(io, games) {
 
         socket.on("game:rollForTurnOrder", () => {
             if (!socket.playerId) {
-                return;s
+                return; s
             }
 
             if (game.phase !== GAME_PHASES.SETUP) {
@@ -841,6 +842,32 @@ function registerSocketHandlers(io, games) {
 
         socket.on("game:setPieceLimit", ({ piece, value }) => {
             game.setPieceLimit(piece, value);
+            broadcastGameState(game);
+        });
+
+        // seafarers
+
+        socket.on("game:setExpansion", ({ expansion, enabled }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            const player = game.players.get(socket.playerId);
+
+            if (!player || !player.isHost) {
+                return;
+            }
+
+            game.config.expansions[expansion] = enabled;
+
+            if (expansion === "seafarers" && enabled) {
+                game.generateSeafarersBoard();
+            }
+
+            if (expansion === "seafarers" && !enabled) {
+                game.setBoardLayout([3,4,5,4,3]);
+            }
+
             broadcastGameState(game);
         });
 

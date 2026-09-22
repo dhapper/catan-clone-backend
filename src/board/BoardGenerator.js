@@ -250,8 +250,64 @@ function generateBoard(rowSizes, { isReroll = false } = {}) {
 
     // port stuff
 
-    const borderEdges = [...board.edges.values()].filter(
-        edge => edge.adjacentTiles.length === 1
+    const borderEdges = [...board.edges.values()].filter(edge => {
+        if (edge.adjacentTiles.length !== 1) {
+            return false;
+        }
+
+        const tile = board.tiles.get(edge.adjacentTiles[0]);
+
+        const vertexA = board.vertices.get(edge.vertices[0]);
+        const vertexB = board.vertices.get(edge.vertices[1]);
+
+        const edgeCenterX =
+            (vertexA.x + vertexB.x) / 2;
+
+        const edgeCenterY =
+            (vertexA.y + vertexB.y) / 2;
+
+        // Direction from the tile center toward the edge
+        const directionX =
+            edgeCenterX - tile.x;
+
+        const directionY =
+            edgeCenterY - tile.y;
+
+        // Point just beyond the edge
+        const checkX =
+            edgeCenterX + directionX * 0.01;
+
+        const checkY =
+            edgeCenterY + directionY * 0.01;
+
+        // Check whether another tile center lies on the other side of this edge.
+        for (const otherTile of board.tiles.values()) {
+            if (otherTile.id === tile.id) {
+                continue;
+            }
+
+            const dx =
+                otherTile.x - checkX;
+
+            const dy =
+                otherTile.y - checkY;
+
+            const distance =
+                Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < HEX_SIZE * 1.1) {
+                return false;
+            }
+        }
+
+        return true;
+    });
+
+    console.log(
+        borderEdges.map(edge => ({
+            edgeId: edge.id,
+            adjacentTiles: edge.adjacentTiles
+        }))
     );
 
     const portCount = getPortCount(borderEdges.length);
@@ -326,6 +382,7 @@ function generateBoard(rowSizes, { isReroll = false } = {}) {
         ...ports[index],
         edgeId: edge.id,
         vertices: [...edge.vertices],
+        side: board.tiles.get(edge.adjacentTiles[0]).edges.indexOf(edge.id),
         ownerId: null
     }));
 

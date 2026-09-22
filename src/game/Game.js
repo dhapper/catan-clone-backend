@@ -1,5 +1,7 @@
 const { GAME_PHASES, SETUP_SUBPHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
+
 const generateBoard = require("../../src/board/BoardGenerator");
+const generateSeafarersBoard = require("../../src/board/SeafarersBoardGenerator");
 
 const Bank = require("./Bank");
 const SetupManager = require("./SetupManager");
@@ -13,10 +15,12 @@ const VictoryPointManager = require("./VictoryPointManager");
 const DevCardManager = require("./DevCardManager");
 const TurnLog = require("./TurnLog");
 const TurnTimer = require("./TurnTimer");
+const GameConfig = require("./GameConfig");
 
 class Game {
     constructor(lobbyCode) {
         this.lobbyCode = lobbyCode;
+        this.config = new GameConfig();
         this.boardLayout = [3, 4, 5, 4, 3];
         this.board = generateBoard(this.boardLayout);
         this.players = new Map();
@@ -396,6 +400,13 @@ class Game {
         }
 
         return null;
+    }
+
+    // seafarers
+
+    generateSeafarersBoard() {
+        this.board = generateSeafarersBoard();
+        this.robber.initializeRobber();
     }
 
 }
