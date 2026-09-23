@@ -25,6 +25,7 @@ function createGameRoutes(games, io) {
                 : null,
             discardRequirements: Object.fromEntries(game.discardRequirements),
             robberTileId: game.robberTileId,
+            pirateTileId: game.pirateTileId,
             robberVictims: game.robberVictims,
             robberSafetyNumber: game.robberSafetyNumber,
             bankResourceCount: game.bankResourceCount,

@@ -13,6 +13,29 @@ class RobberManager {
         if (desertTile) {
             this.game.robberTileId = desertTile.id;
         }
+
+        this.initializePirate();
+    }
+
+    initializePirate() {
+        if (!this.game.config.expansions.seafarers) {
+            this.game.pirateTileId = null;
+            return;
+        }
+
+        const waterTiles = [
+            ...this.game.board.tiles.values()
+        ].filter(tile => tile.type === "water");
+
+        if (waterTiles.length === 0) {
+            this.game.pirateTileId = null;
+            return;
+        }
+
+        const middleIndex = Math.floor(waterTiles.length / 2);
+
+        this.game.pirateTileId =
+            waterTiles[middleIndex].id;
     }
 
     moveRobber(tileId) {
@@ -30,6 +53,10 @@ class RobberManager {
         const tile = this.game.board.tiles.get(tileId);
 
         if (!tile) {
+            return false;
+        }
+
+        if (tile.type === "water") {
             return false;
         }
 
@@ -77,6 +104,49 @@ class RobberManager {
         }
 
         this.game.subphase = GAMEPLAY_SUBPHASES.ACTION;
+
+        return true;
+    }
+
+    movePirate(tileId) {
+        if (!this.game.config.expansions.seafarers) {
+            return false;
+        }
+
+        if (this.game.phase !== GAME_PHASES.GAMEPLAY) {
+            return false;
+        }
+
+        if (
+            this.game.subphase !==
+            GAMEPLAY_SUBPHASES.ROBBER_PLACEMENT
+        ) {
+            return false;
+        }
+
+        const tile = this.game.board.tiles.get(tileId);
+
+        if (!tile) {
+            return false;
+        }
+
+        if (tile.type !== "water") {
+            return false;
+        }
+
+        if (tileId === this.game.pirateTileId) {
+            return false;
+        }
+
+        this.game.pirateTileId = tileId;
+
+        this.game.turnLog.addMessage(
+            "PIRATE",
+            `Pirate moved to water:${tile.numberToken ?? "-"}`
+        );
+
+        this.game.subphase =
+            GAMEPLAY_SUBPHASES.ACTION;
 
         return true;
     }
@@ -250,6 +320,10 @@ class RobberManager {
         for (const tile of this.game.board.tiles.values()) {
             // Cannot stay on the current robber tile.
             if (tile.id === this.game.robberTileId) {
+                continue;
+            }
+
+            if (tile.type === "water") {
                 continue;
             }
 

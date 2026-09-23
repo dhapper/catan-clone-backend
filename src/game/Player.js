@@ -16,9 +16,9 @@ class Player {
         this.resources = {
             wood: 0,
             brick: 0,
-            wheat: 0,
-            sheep: 0,
-            ore: 0
+            wheat: 10,
+            sheep: 10,
+            ore: 10
         };
 
         this.ports = [];

@@ -35,6 +35,7 @@ function registerSocketHandlers(io, games) {
             buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null,
             discardRequirements: Object.fromEntries(game.discardRequirements),
             robberTileId: game.robberTileId,
+            pirateTileId: game.pirateTileId,
             robberVictims: game.robberVictims,
             robberSafetyNumber: game.robberSafetyNumber,
             bankResourceCount: game.bankResourceCount,
@@ -897,6 +898,31 @@ function registerSocketHandlers(io, games) {
             game.generateSeafarersBoard(
                 SEAFARERS_MAPS[map]
             );
+
+            broadcastGameState(game);
+        });
+
+        socket.on("game:movePirate", ({ tileId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.movePirate(tileId)) {
+                console.log("PIRATE MOVE REJECTED");
+                return;
+            }
+
+            console.log(
+                "PIRATE MOVED:",
+                socket.playerId,
+                tileId
+            );
+
+            io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "place");
 
             broadcastGameState(game);
         });

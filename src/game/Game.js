@@ -35,6 +35,7 @@ class Game {
         this.currentTrade = null;
         this.discardRequirements = new Map();
         this.robberTileId = null;
+        this.pirateTileId = null;
         this.robberVictims = [];
         this.robberSafetyNumber = 7;
         this.victoryPointsNeeded = 10;
@@ -208,6 +209,10 @@ class Game {
         return this.robber.moveRobber(tileId);
     }
 
+    movePirate(tileId) {
+        return this.robber.movePirate(tileId);
+    }
+
     stealResource(victimId) {
         return this.robber.stealResource(victimId);
     }
@@ -323,7 +328,7 @@ class Game {
         if (this.config.expansions.seafarers) {
             // if seafarers enabled
             this.generateSeafarersBoard(SEAFARERS_MAPS[this.config.seafarers.map]);
-        }else{
+        } else {
             // if base game
             this.board = generateBoard(this.boardLayout, { isReroll: true });
         }
