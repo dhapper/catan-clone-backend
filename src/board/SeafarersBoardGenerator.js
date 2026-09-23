@@ -12,28 +12,11 @@ const {
 const { ALL_TOKENS } = require("../constants/NumberTokens");
 const DEFAULT_PORTS = require("../constants/PortConstants");
 
+const {
+    SEAFARERS_MAPS
+} = require("../constants/SeafarersConstants");
+
 const HEX_SIZE = 120;
-
-const SEAFARERS_MAP = [
-    "XXOO",
-    "OOOXX",
-    "OXXOXO",
-    "OXXXOXO",
-    "XXXXOO",
-    "XXXOX",
-    "XXOX"
-];
-
-const SEAFARERS_PORT_LOCATIONS = [
-    { row: 2, column: 1, side: 4 },
-    { row: 2, column: 2, side: 1 },
-    { row: 4, column: 0, side: 3 },
-    { row: 4, column: 0, side: 5 },
-    { row: 4, column: 3, side: 0 },
-    { row: 6, column: 0, side: 4 },
-    { row: 6, column: 1, side: 1 },
-    { row: 6, column: 1, side: 3 },
-];
 
 function shuffle(array) {
     const shuffled = [...array];
@@ -149,16 +132,16 @@ function assignNumberTokens(board, resourceTiles) {
  *
  * Land-land and water-water edges do not receive ports.
  */
-function generateSeafarersPorts(board) {
+function generateSeafarersPorts(board, portLocations) {
     const ports =
         shuffle(
             DEFAULT_PORTS.slice(
                 0,
-                SEAFARERS_PORT_LOCATIONS.length
+                portLocations.length
             )
         );
 
-    return SEAFARERS_PORT_LOCATIONS.map(
+    return portLocations.map(
         ({ row, column, side }, index) => {
 
             const tile =
@@ -207,15 +190,24 @@ function generateSeafarersPorts(board) {
     );
 }
 
-function generateSeafarersBoard({ isReroll = false } = {}) {
+function generateSeafarersBoard(
+    mapConfig,
+    { isReroll = false } = {}
+) {
+
+    const {
+        map,
+        portLocations
+    } = mapConfig;
+
     const rowSizes =
-        SEAFARERS_MAP.map(row => row.length);
+        map.map(row => row.length);
 
     const board = new Board(rowSizes);
     board.hexSize = HEX_SIZE;
 
     const landTileCount =
-        SEAFARERS_MAP
+        map
             .join("")
             .split("")
             .filter(cell => cell === "X")
@@ -239,11 +231,11 @@ function generateSeafarersBoard({ isReroll = false } = {}) {
 
     for (
         let row = 0;
-        row < SEAFARERS_MAP.length;
+        row < map.length;
         row++
     ) {
         const rowLayout =
-            SEAFARERS_MAP[row];
+            map[row];
 
         const numberOfTiles =
             rowLayout.length;
@@ -435,8 +427,11 @@ function generateSeafarersBoard({ isReroll = false } = {}) {
      * Generate ports on every valid
      * land/coast edge.
      */
-    board.ports =
-        generateSeafarersPorts(board);
+board.ports =
+    generateSeafarersPorts(
+        board,
+        portLocations
+    );
 
     /*
      * Number tokens only go on

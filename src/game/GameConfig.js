@@ -4,6 +4,10 @@ class GameConfig {
         this.expansions = {
             seafarers: false
         };
+
+        this.seafarers = {
+            map: null
+        };
     }
 
 }

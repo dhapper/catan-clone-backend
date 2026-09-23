@@ -10,6 +10,10 @@ const {
     emitAchievementSound
 } = require("../services/SoundManager");
 
+const {
+    SEAFARERS_MAPS
+} = require("../constants/SeafarersConstants");
+
 function registerSocketHandlers(io, games) {
     function broadcastGameState(game) {
 
@@ -861,12 +865,38 @@ function registerSocketHandlers(io, games) {
             game.config.expansions[expansion] = enabled;
 
             if (expansion === "seafarers" && enabled) {
-                game.generateSeafarersBoard();
+                game.generateSeafarersBoard(SEAFARERS_MAPS.HEADING_FOR_NEW_SHORES);
             }
 
             if (expansion === "seafarers" && !enabled) {
-                game.setBoardLayout([3,4,5,4,3]);
+                game.setBoardLayout([3, 4, 5, 4, 3]);
             }
+
+            broadcastGameState(game);
+        });
+
+        socket.on("game:setSeafarersMap", ({ map }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            const player = game.players.get(socket.playerId);
+
+            if (!player || !player.isHost) {
+                return;
+            }
+
+            if (!game.config.expansions.seafarers) {
+                return;
+            }
+
+            if (!SEAFARERS_MAPS[map]) {
+                return;
+            }
+
+            game.generateSeafarersBoard(
+                SEAFARERS_MAPS[map]
+            );
 
             broadcastGameState(game);
         });

@@ -2,6 +2,9 @@ const { GAME_PHASES, SETUP_SUBPHASES, GAMEPLAY_SUBPHASES } = require("../constan
 
 const generateBoard = require("../../src/board/BoardGenerator");
 const generateSeafarersBoard = require("../../src/board/SeafarersBoardGenerator");
+const {
+    SEAFARERS_MAPS
+} = require("../constants/SeafarersConstants");
 
 const Bank = require("./Bank");
 const SetupManager = require("./SetupManager");
@@ -317,7 +320,14 @@ class Game {
     }
 
     regenerateBoard() {
-        this.board = generateBoard(this.boardLayout, { isReroll: true });
+        if (this.config.expansions.seafarers) {
+            // if seafarers enabled
+            this.generateSeafarersBoard(SEAFARERS_MAPS[this.config.seafarers.map]);
+        }else{
+            // if base game
+            this.board = generateBoard(this.boardLayout, { isReroll: true });
+        }
+
         this.robber.initializeRobber();
     }
 
@@ -404,8 +414,9 @@ class Game {
 
     // seafarers
 
-    generateSeafarersBoard() {
-        this.board = generateSeafarersBoard();
+    generateSeafarersBoard(map) {
+        this.config.seafarers.map = map.id;
+        this.board = generateSeafarersBoard(map);
         this.robber.initializeRobber();
     }
 
