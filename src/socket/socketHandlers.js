@@ -4,38 +4,101 @@ const {
     SETUP_SUBPHASES,
     GAMEPLAY_SUBPHASES
 } = require("../constants/GameConstants");
+const { broadcastGameState: broadcastRoomState } = require("./gameState");
 
-function registerSocketHandlers(io, game) {
-    function broadcastGameState() {
-        io.emit("game:state", {
-            players: [...game.players.values()],
-            colors: game.colors,
-            phase: game.phase,
-            subphase: game.subphase,
-            currentTrade: game.currentTrade,
-            currentPlayerId: game.currentPlayerId,
-            diceRoll: game.diceRoll,
-            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder,
-            bank: game.bank.resources,
-            buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null,
-            discardRequirements: Object.fromEntries(game.discardRequirements),
-            robberTileId: game.robberTileId,
-            robberVictims: game.robberVictims,
-            robberSafetyNumber: game.robberSafetyNumber,
-            bankResourceCount: game.bankResourceCount,
-            victoryPointsNeeded: game.victoryPointsNeeded,
-            boardLayout: game.boardLayout,
-            winner: game.winner,
-        });
-    }
-
+function registerSocketHandlers(io, rooms) {
     io.on("connection", (socket) => {
         socket.playerId = null;
 
+        // The room this socket is in, and its game. Every handler below
+        // reads these, so one connection only ever affects its own room.
+        let room = null;
+        let game = null;
+
         console.log("Client connected:", socket.id);
 
-        broadcastGameState();
+        function broadcastGameState() {
+            broadcastRoomState(io, room);
+        }
+
+        function leaveRoom() {
+            if (!room) {
+                return;
+            }
+
+            const leavingRoom = room;
+
+            if (socket.playerId) {
+                const player = leavingRoom.game.players.get(socket.playerId);
+
+                if (player) {
+                    player.connected = false;
+                }
+            }
+
+            socket.leave(leavingRoom.code);
+            rooms.removeSocket(leavingRoom);
+
+            socket.playerId = null;
+            room = null;
+            game = null;
+
+            broadcastRoomState(io, leavingRoom);
+        }
+
+        function enterRoom(newRoom) {
+            leaveRoom();
+
+            room = newRoom;
+            game = newRoom.game;
+
+            socket.join(room.code);
+            rooms.addSocket(room);
+
+            socket.emit("room:joined", {
+                code: room.code
+            });
+
+            broadcastGameState();
+        }
+
+        socket.on("room:create", () => {
+            enterRoom(rooms.createRoom());
+        });
+
+        socket.on("room:join", ({ code } = {}) => {
+            const targetRoom = rooms.getRoom(code);
+
+            if (!targetRoom) {
+                socket.emit("room:error", {
+                    error: "Room not found"
+                });
+                return;
+            }
+
+            if (targetRoom === room) {
+                socket.emit("room:joined", {
+                    code: room.code
+                });
+                broadcastGameState();
+                return;
+            }
+
+            enterRoom(targetRoom);
+        });
+
+        socket.on("room:leave", () => {
+            leaveRoom();
+        });
+
+        // Ignore every game/player event until the socket has joined a room
+        socket.use(([event], next) => {
+            if (!event.startsWith("room:") && !room) {
+                return;
+            }
+
+            next();
+        });
 
         socket.on("player:create", ({ name }) => {
             if (socket.playerId) {
@@ -156,15 +219,7 @@ function registerSocketHandlers(io, game) {
         socket.on("disconnect", () => {
             console.log("Client disconnected:", socket.id);
 
-            if (socket.playerId) {
-                const player = game.players.get(socket.playerId);
-
-                if (player) {
-                    player.connected = false;
-                }
-
-                broadcastGameState();
-            }
+            leaveRoom();
         });
 
         socket.on("game:start", () => {
@@ -221,7 +276,7 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
-            io.emit("game:sound", "diceRoll");
+            io.to(room.code).emit("game:sound", "diceRoll");
 
             broadcastGameState();
         });
@@ -239,7 +294,7 @@ function registerSocketHandlers(io, game) {
                 return;
             }
 
-            io.emit("game:sound", "pickupDice");
+            io.to(room.code).emit("game:sound", "pickupDice");
 
             broadcastGameState();
         });
@@ -310,7 +365,7 @@ function registerSocketHandlers(io, game) {
                 tileId
             );
 
-            io.emit("game:sound", "place");
+            io.to(room.code).emit("game:sound", "place");
 
             broadcastGameState();
         });

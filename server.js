@@ -4,7 +4,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 
 const createGameRoutes = require("./src/routes/gameRoutes");
-const Game = require("./src/game/Game");
+const RoomManager = require("./src/rooms/RoomManager");
 const registerSocketHandlers = require("./src/socket/socketHandlers");
 
 const app = express();
@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const game = new Game();
+const rooms = new RoomManager();
 
 app.get("/api/hello", (req, res) => {
     res.json({
@@ -29,9 +29,9 @@ app.get("/api/hello", (req, res) => {
     });
 });
 
-app.use("/api", createGameRoutes(game, io));
+app.use("/api", createGameRoutes(rooms, io));
 
-registerSocketHandlers(io, game);
+registerSocketHandlers(io, rooms);
 
 httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Backend running on port ${PORT}`);

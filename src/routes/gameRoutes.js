@@ -1,36 +1,27 @@
 const express = require("express");
+const { broadcastGameState } = require("../socket/gameState");
 
-const router = express.Router();
+function createGameRoutes(rooms, io) {
+    const router = express.Router();
 
-function createGameRoutes(game, io) {
-    function broadcastGameState() {
-        io.emit("game:state", {
-            players: [...game.players.values()],
-            colors: game.colors,
-            phase: game.phase,
-            subphase: game.subphase,
-            currentTrade: game.currentTrade,
-            currentPlayerId: game.currentPlayerId,
-            diceRoll: game.diceRoll,
-            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder,
-            bank: game.bank.resources,
-            buildAvailability: game.currentPlayerId
-                ? game.getBuildAvailability(game.currentPlayerId)
-                : null,
-            discardRequirements: Object.fromEntries(game.discardRequirements),
-            robberTileId: game.robberTileId,
-            robberVictims: game.robberVictims,
-            robberSafetyNumber: game.robberSafetyNumber,
-            bankResourceCount: game.bankResourceCount,
-            victoryPointsNeeded: game.victoryPointsNeeded,
-            boardLayout: game.boardLayout,
-            winner: game.winner,
-            ports: game.board.ports,
-        });
+    function loadRoom(req, res, next) {
+        const room = rooms.getRoom(req.params.code);
+
+        if (!room) {
+            return res.status(404).json({
+                error: "Room not found"
+            });
+        }
+
+        req.room = room;
+        req.game = room.game;
+        next();
     }
 
-    router.get("/game", (req, res) => {
+    router.use("/rooms/:code", loadRoom);
+
+    router.get("/rooms/:code/game", (req, res) => {
+        const { game } = req;
         res.json({
             rowSizes: game.board.rowSizes,
             hexSize: game.board.hexSize,
@@ -48,7 +39,8 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/build/settlement", (req, res) => {
+    router.post("/rooms/:code/game/build/settlement", (req, res) => {
+        const { game, room } = req;
         const { vertexId } = req.body;
 
         console.log("BUILD SETTLEMENT REQUEST:", {
@@ -72,9 +64,9 @@ function createGameRoutes(game, io) {
             });
         }
 
-        io.emit("game:sound", "place");
+        io.to(room.code).emit("game:sound", "place");
 
-        broadcastGameState();
+        broadcastGameState(io, room);
 
         res.json({
             success: true,
@@ -82,7 +74,8 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/build/road", (req, res) => {
+    router.post("/rooms/:code/game/build/road", (req, res) => {
+        const { game, room } = req;
         const { edgeId } = req.body;
 
         const edge = game.board.edges.get(edgeId);
@@ -99,9 +92,9 @@ function createGameRoutes(game, io) {
             });
         }
 
-        io.emit("game:sound", "place");
+        io.to(room.code).emit("game:sound", "place");
 
-        broadcastGameState();
+        broadcastGameState(io, room);
 
         res.json({
             success: true,
@@ -109,11 +102,12 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/reset", (req, res) => {
+    router.post("/rooms/:code/game/reset", (req, res) => {
+        const { game, room } = req;
         game.reset();
-        io.emit("game:reset");
-        io.emit("game:sound", "reset");
-        broadcastGameState();
+        io.to(room.code).emit("game:reset");
+        io.to(room.code).emit("game:sound", "reset");
+        broadcastGameState(io, room);
 
         res.json({
             success: true,
@@ -121,7 +115,8 @@ function createGameRoutes(game, io) {
         });
     });
 
-    router.post("/game/build/city", (req, res) => {
+    router.post("/rooms/:code/game/build/city", (req, res) => {
+        const { game, room } = req;
         const { vertexId } = req.body;
 
         const vertex = game.board.vertices.get(vertexId);
@@ -138,9 +133,9 @@ function createGameRoutes(game, io) {
             });
         }
 
-        io.emit("game:sound", "place");
+        io.to(room.code).emit("game:sound", "place");
 
-        broadcastGameState();
+        broadcastGameState(io, room);
 
         res.json({
             success: true,
