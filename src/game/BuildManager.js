@@ -65,6 +65,112 @@ class BuildManager {
         return false;
     }
 
+    canBuildShip(edgeId) {
+        if (!this.game.config.expansions.seafarers) {
+            return false;
+        }
+
+        const edge = this.game.board.edges.get(edgeId);
+
+        console.log("SHIP EDGE:", {
+            edgeId,
+            vertices: edge?.vertices,
+            adjacentTiles: edge?.adjacentTiles,
+            road: edge?.road,
+            ship: edge?.ship
+        });
+
+        if (!edge || edge.road || edge.ship) {
+            return false;
+        }
+
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        if (!player || player.pieces?.ship <= 0) {
+            return false;
+        }
+
+        // A ship must be placed on a coastal edge.
+        const hasWaterTile = edge.adjacentTiles.some(tileId => {
+            const tile = this.game.board.tiles.get(tileId);
+            return tile?.type === "water";
+        });
+
+        if (!hasWaterTile) {
+            return false;
+        }
+
+        const currentPlayerId = this.game.currentPlayerId;
+
+        for (const vertexId of edge.vertices) {
+            const vertex = this.game.board.vertices.get(vertexId);
+
+            // Own settlement/city connects to the ship network.
+            if (
+                vertex.building &&
+                vertex.building.playerId === currentPlayerId
+            ) {
+                return true;
+            }
+
+            // Opponent building blocks the network at this vertex.
+            if (
+                vertex.building &&
+                vertex.building.playerId !== currentPlayerId
+            ) {
+                continue;
+            }
+
+            // Own ship connects to the ship network.
+            for (const adjacentEdgeId of vertex.adjacentEdges) {
+                const adjacentEdge =
+                    this.game.board.edges.get(adjacentEdgeId);
+
+                if (
+                    adjacentEdge &&
+                    adjacentEdge.ship &&
+                    adjacentEdge.ship.playerId === currentPlayerId
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        console.log("SHIP CHECK:", {
+            currentPlayerId,
+            vertices: edge.vertices.map(vertexId => {
+                const vertex = this.game.board.vertices.get(vertexId);
+
+                return {
+                    id: vertexId,
+                    building: vertex?.building,
+                    adjacentEdges: vertex?.adjacentEdges.map(adjacentEdgeId => {
+                        const adjacentEdge =
+                            this.game.board.edges.get(adjacentEdgeId);
+
+                        return {
+                            id: adjacentEdgeId,
+                            road: adjacentEdge?.road,
+                            ship: adjacentEdge?.ship
+                        };
+                    })
+                };
+            }),
+            tiles: edge.adjacentTiles.map(tileId => {
+                const tile = this.game.board.tiles.get(tileId);
+
+                return {
+                    id: tileId,
+                    type: tile?.type
+                };
+            })
+        });
+
+        return false;
+    }
+
     canBuildSetupRoad(edgeId) {
         const edge = this.game.board.edges.get(edgeId);
 
@@ -95,6 +201,22 @@ class BuildManager {
         }
 
         return buildableRoads;
+    }
+
+    getBuildableShips() {
+        if (!this.game.config.expansions.seafarers) {
+            return [];
+        }
+
+        const buildableShips = [];
+
+        for (const edge of this.game.board.edges.values()) {
+            if (this.canBuildShip(edge.id)) {
+                buildableShips.push(edge.id);
+            }
+        }
+
+        return buildableShips;
     }
 
     placeRoad(edgeId) {
@@ -166,6 +288,50 @@ class BuildManager {
         return {
             success: true,
             achievementChanged
+        };
+    }
+
+    placeShip(edgeId) {
+        if (!this.canBuildShip(edgeId)) {
+            return {
+                success: false
+            };
+        }
+
+        const player = this.game.players.get(
+            this.game.currentPlayerId
+        );
+
+        if (!this.game.canAfford(
+            this.game.currentPlayerId,
+            BUILD_COSTS[STRUCTURE_TYPES.SHIP]
+        )) {
+            return {
+                success: false
+            };
+        }
+
+        this.game.payCost(
+            this.game.currentPlayerId,
+            BUILD_COSTS[STRUCTURE_TYPES.SHIP]
+        );
+
+        const edge = this.game.board.edges.get(edgeId);
+
+        edge.ship = {
+            playerId: this.game.currentPlayerId
+        };
+
+        player.pieces.ship--;
+
+        this.game.turnLog.addMessage(
+            "BUILD",
+            "Ship placed"
+        );
+
+        return {
+            success: true,
+            achievementChanged: false
         };
     }
 
@@ -487,7 +653,14 @@ class BuildManager {
             developmentCard: this.game.canAfford(
                 playerId,
                 BUILD_COSTS[STRUCTURE_TYPES.DEVELOPMENT_CARD]
-            )
+            ),
+
+            ship:
+                this.game.config.expansions.seafarers &&
+                this.game.canAfford(
+                    playerId,
+                    BUILD_COSTS[STRUCTURE_TYPES.SHIP]
+                ),
         };
     }
 }

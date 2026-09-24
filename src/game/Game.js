@@ -43,6 +43,7 @@ class Game {
 
         this.pieceLimits = {
             road: 15,
+            ship: 15,
             settlement: 5,
             city: 4
         };
@@ -163,6 +164,20 @@ class Game {
 
     getBuildAvailability(playerId) {
         return this.build.getBuildAvailability(playerId);
+    }
+
+    // build ships
+
+    canBuildShip(edgeId) {
+        return this.build.canBuildShip(edgeId);
+    }
+
+    placeShip(edgeId) {
+        return this.build.placeShip(edgeId);
+    }
+
+    getBuildableShips() {
+        return this.build.getBuildableShips();
     }
 
     // TurnManager.js

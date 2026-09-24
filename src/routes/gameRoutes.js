@@ -57,6 +57,7 @@ function createGameRoutes(games, io) {
             players: [...game.players.values()],
             currentPlayerId: game.currentPlayerId,
             buildableRoads: game.getBuildableRoads(),
+            buildableShips: game.getBuildableShips(),
             buildableSettlements: game.getBuildableSettlements(),
             buildableCities: game.getBuildableCities(),
             tiles: [...game.board.tiles.values()],
@@ -150,6 +151,30 @@ function createGameRoutes(games, io) {
             success: true,
             edge
         });
+    });
+
+    router.post("/game/:lobbyCode/build/ship", (req, res) => {
+        const game = games.get(req.params.lobbyCode);
+
+        if (!game) {
+            return res.status(404).json({
+                error: "Game not found"
+            });
+        }
+
+        const { edgeId } = req.body;
+
+        const result = game.placeShip(edgeId);
+
+        if (!result.success) {
+            return res.status(400).json({
+                error: "Cannot build ship"
+            });
+        }
+
+        broadcastGameState(game);
+
+        return res.json(result);
     });
 
     router.post("/game/:lobbyCode/reset", (req, res) => {
