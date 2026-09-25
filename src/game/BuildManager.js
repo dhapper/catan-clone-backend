@@ -21,6 +21,17 @@ class BuildManager {
             return false;
         }
 
+        if (this.game.config.expansions.seafarers) {
+            const hasLandTile = edge.adjacentTiles.some(tileId => {
+                const tile = this.game.board.tiles.get(tileId);
+                return tile && tile.type !== "water";
+            });
+
+            if (!hasLandTile) {
+                return false;
+            }
+        }
+
         const currentPlayerId = this.game.currentPlayerId;
 
         const player = this.game.players.get(
@@ -176,6 +187,17 @@ class BuildManager {
 
         if (!edge || edge.road) {
             return false;
+        }
+
+        if (this.game.config.expansions.seafarers) {
+            const hasLandTile = edge.adjacentTiles.some(tileId => {
+                const tile = this.game.board.tiles.get(tileId);
+                return tile && tile.type !== "water";
+            });
+
+            if (!hasLandTile) {
+                return false;
+            }
         }
 
         if (!this.game.setupSettlementVertexId) {
@@ -353,6 +375,17 @@ class BuildManager {
             return false;
         }
 
+        if (this.game.config.expansions.seafarers) {
+            const hasLandTile = vertex.adjacentTiles.some(tileId => {
+                const tile = this.game.board.tiles.get(tileId);
+                return tile && tile.type !== "water";
+            });
+
+            if (!hasLandTile) {
+                return false;
+            }
+        }
+
         const player = this.game.players.get(
             this.game.currentPlayerId
         );
@@ -388,6 +421,15 @@ class BuildManager {
                 edge &&
                 edge.road &&
                 edge.road.playerId === this.game.currentPlayerId
+            ) {
+                return true;
+            }
+
+            if (
+                this.game.config.expansions.seafarers &&
+                edge &&
+                edge.ship &&
+                edge.ship.playerId === this.game.currentPlayerId
             ) {
                 return true;
             }

@@ -1,5 +1,7 @@
 const Player = require("../game/Player");
 const Game = require("../game/Game");
+const getGameState = require("../utils/gameState");
+
 const {
     GAME_PHASES,
     SETUP_SUBPHASES,
@@ -19,35 +21,10 @@ function registerSocketHandlers(io, games) {
 
         game.timer.check(io, broadcastGameState);
 
-        io.to(`lobby:${game.lobbyCode}`).emit("game:state", {
-            lobbyCode: game.lobbyCode,
-            config: game.config,
-            players: [...game.players.values()],
-            colors: game.colors,
-            phase: game.phase,
-            subphase: game.subphase,
-            currentTrade: game.currentTrade,
-            currentPlayerId: game.currentPlayerId,
-            diceRoll: game.diceRoll,
-            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder,
-            bank: game.bank.resources,
-            buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null,
-            discardRequirements: Object.fromEntries(game.discardRequirements),
-            robberTileId: game.robberTileId,
-            pirateTileId: game.pirateTileId,
-            robberVictims: game.robberVictims,
-            robberSafetyNumber: game.robberSafetyNumber,
-            bankResourceCount: game.bankResourceCount,
-            victoryPointsNeeded: game.victoryPointsNeeded,
-            boardLayout: game.boardLayout,
-            pieceLimits: game.pieceLimits,
-            winner: game.winner,
-            turnEndsAt: game.timer.turnEndsAt,
-            timerPaused: game.timer.timerPaused,
-            timerRemainingMs: game.timer.timerRemainingMs,
-            turnLog: game.turnLog.entries
-        });
+        io.to(`lobby:${game.lobbyCode}`).emit(
+            "game:state",
+            getGameState(game)
+        );
     }
 
     io.on("connection", (socket) => {
