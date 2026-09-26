@@ -904,6 +904,41 @@ function registerSocketHandlers(io, games) {
             broadcastGameState(game);
         });
 
+        socket.on("game:moveShip", ({ fromEdgeId, toEdgeId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            const result = game.moveShip(
+                fromEdgeId,
+                toEdgeId
+            );
+
+            if (!result || !result.success) {
+                console.log("SHIP MOVE REJECTED");
+                return;
+            }
+
+            console.log(
+                "SHIP MOVED:",
+                socket.playerId,
+                fromEdgeId,
+                "->",
+                toEdgeId
+            );
+
+            io.to(`lobby:${game.lobbyCode}`).emit(
+                "game:sound",
+                "place"
+            );
+
+            broadcastGameState(game);
+        });
+
     });
 
 }

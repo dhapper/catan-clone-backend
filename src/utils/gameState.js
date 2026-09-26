@@ -15,6 +15,17 @@ function getGameState(game) {
         buildAvailability: game.currentPlayerId
             ? game.getBuildAvailability(game.currentPlayerId)
             : null,
+        movableShips: game.currentPlayerId
+            ? game.getMovableShips()
+            : [],
+        shipMoveDestinations: game.currentPlayerId
+            ? Object.fromEntries(
+                game.getMovableShips().map(edgeId => [
+                    edgeId,
+                    game.getShipMoveDestinations(edgeId)
+                ])
+            )
+            : {},
         discardRequirements: Object.fromEntries(game.discardRequirements),
         robberTileId: game.robberTileId,
         pirateTileId: game.pirateTileId,

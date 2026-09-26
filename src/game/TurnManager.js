@@ -47,8 +47,20 @@ class TurnManager {
         }
 
         if (currentPlayer) {
-            // one card per turn reset
+            // one card / ship moved per turn reset
             currentPlayer.devCardPlayed = false;
+            currentPlayer.shipMoved = false;
+
+            // ships built this turn can move on a future turn
+            for (const edge of this.game.board.edges.values()) {
+                if (
+                    edge.ship &&
+                    edge.ship.playerId === currentPlayer.id
+                ) {
+                    edge.ship.builtThisTurn = false;
+                }
+            }
+
             // disable leftover roadbuilding
             currentPlayer.roadBuildingRemaining = 0;
         }

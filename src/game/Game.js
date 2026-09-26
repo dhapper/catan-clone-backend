@@ -168,17 +168,17 @@ class Game {
 
     // build ships
 
-    canBuildShip(edgeId) {
-        return this.build.canBuildShip(edgeId);
-    }
+    // canBuildShip(edgeId) {
+    //     return this.build.canBuildShip(edgeId);
+    // }
 
-    placeShip(edgeId) {
-        return this.build.placeShip(edgeId);
-    }
+    // placeShip(edgeId) {
+    //     return this.build.placeShip(edgeId);
+    // }
 
-    getBuildableShips() {
-        return this.build.getBuildableShips();
-    }
+    // getBuildableShips() {
+    //     return this.build.getBuildableShips();
+    // }
 
     // TurnManager.js
 
@@ -438,6 +438,42 @@ class Game {
         this.config.seafarers.map = map.id;
         this.board = generateSeafarersBoard(map);
         this.robber.initializeRobber();
+    }
+
+    canBuildShip(edgeId) {
+        return this.build.canBuildShip(edgeId);
+    }
+
+    placeShip(edgeId) {
+        return this.build.placeShip(edgeId);
+    }
+
+    getBuildableShips() {
+        return this.build.getBuildableShips();
+    }
+
+    canMoveShip(fromEdgeId, toEdgeId) {
+        return this.build.canMoveShip(
+            fromEdgeId,
+            toEdgeId
+        );
+    }
+
+    getMovableShips() {
+        return this.build.getMovableShips();
+    }
+
+    getShipMoveDestinations(fromEdgeId) {
+        return this.build.getShipMoveDestinations(
+            fromEdgeId
+        );
+    }
+
+    moveShip(fromEdgeId, toEdgeId) {
+        return this.build.moveShip(
+            fromEdgeId,
+            toEdgeId
+        );
     }
 
 }

@@ -27,6 +27,7 @@ class Player {
         this.devCardPlayed = false;
         this.roadBuildingRemaining = 0;
         this.inventionActive = false;
+        this.shipMoved = false;
     }
 
     addResource(resource, amount = 1) {
