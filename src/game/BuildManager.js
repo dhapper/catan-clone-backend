@@ -76,6 +76,20 @@ class BuildManager {
         return false;
     }
 
+    isShipBlockedByPirate(edge) {
+        if (!this.game.config.expansions.seafarers) {
+            return false;
+        }
+
+        if (!this.game.pirateTileId) {
+            return false;
+        }
+
+        return edge.adjacentTiles.includes(
+            this.game.pirateTileId
+        );
+    }
+
     canBuildShip(edgeId) {
         if (!this.game.config.expansions.seafarers) {
             return false;
@@ -92,6 +106,10 @@ class BuildManager {
         // });
 
         if (!edge || edge.road || edge.ship) {
+            return false;
+        }
+
+        if (this.isShipBlockedByPirate(edge)) {
             return false;
         }
 
@@ -206,6 +224,13 @@ class BuildManager {
         const toEdge = this.game.board.edges.get(toEdgeId);
 
         if (!fromEdge || !toEdge) {
+            return false;
+        }
+
+        if (
+            this.isShipBlockedByPirate(fromEdge) ||
+            this.isShipBlockedByPirate(toEdge)
+        ) {
             return false;
         }
 
@@ -370,6 +395,11 @@ class BuildManager {
                 edge.ship.playerId === this.game.currentPlayerId &&
                 !edge.ship.builtThisTurn
             ) {
+
+                if (this.isShipBlockedByPirate(edge)) {
+                    continue;
+                }
+
                 const isOpen = edge.vertices.some(vertexId => {
                     const vertex =
                         this.game.board.vertices.get(vertexId);

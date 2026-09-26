@@ -145,6 +145,36 @@ class RobberManager {
             `Pirate moved to water:${tile.numberToken ?? "-"}`
         );
 
+        this.game.robberVictims = [];
+
+        for (const edge of this.game.board.edges.values()) {
+            if (!edge.ship) {
+                continue;
+            }
+
+            if (!edge.adjacentTiles.includes(tileId)) {
+                continue;
+            }
+
+            const playerId = edge.ship.playerId;
+
+            if (playerId === this.game.currentPlayerId) {
+                continue;
+            }
+
+            if (!this.game.robberVictims.includes(playerId)) {
+                this.game.robberVictims.push(playerId);
+            }
+        }
+
+        if (this.game.robberVictims.length === 1) {
+            this.stealResource(
+                this.game.robberVictims[0]
+            );
+
+            this.game.robberVictims = [];
+        }
+
         this.game.subphase =
             GAMEPLAY_SUBPHASES.ACTION;
 

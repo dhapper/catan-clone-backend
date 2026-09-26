@@ -14,11 +14,11 @@ class Player {
         this.knightsPlayed = 0;
 
         this.resources = {
-            wood: 30,
-            brick: 30,
-            wheat: 30,
-            sheep: 30,
-            ore: 30
+            wood: 0,
+            brick: 0,
+            wheat: 0,
+            sheep: 0,
+            ore: 0
         };
 
         this.ports = [];
