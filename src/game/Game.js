@@ -1,5 +1,10 @@
 const { GAME_PHASES, SETUP_SUBPHASES, GAMEPLAY_SUBPHASES } = require("../constants/GameConstants");
+
 const generateBoard = require("../../src/board/BoardGenerator");
+const generateSeafarersBoard = require("../../src/board/SeafarersBoardGenerator");
+const {
+    SEAFARERS_MAPS
+} = require("../constants/SeafarersConstants");
 
 const Bank = require("./Bank");
 const SetupManager = require("./SetupManager");
@@ -13,10 +18,12 @@ const VictoryPointManager = require("./VictoryPointManager");
 const DevCardManager = require("./DevCardManager");
 const TurnLog = require("./TurnLog");
 const TurnTimer = require("./TurnTimer");
+const GameConfig = require("./GameConfig");
 
 class Game {
     constructor(lobbyCode) {
         this.lobbyCode = lobbyCode;
+        this.config = new GameConfig();
         this.boardLayout = [3, 4, 5, 4, 3];
         this.board = generateBoard(this.boardLayout);
         this.players = new Map();
@@ -28,6 +35,7 @@ class Game {
         this.currentTrade = null;
         this.discardRequirements = new Map();
         this.robberTileId = null;
+        this.pirateTileId = null;
         this.robberVictims = [];
         this.robberSafetyNumber = 7;
         this.victoryPointsNeeded = 10;
@@ -35,6 +43,7 @@ class Game {
 
         this.pieceLimits = {
             road: 15,
+            ship: 15,
             settlement: 5,
             city: 4
         };
@@ -157,6 +166,20 @@ class Game {
         return this.build.getBuildAvailability(playerId);
     }
 
+    // build ships
+
+    // canBuildShip(edgeId) {
+    //     return this.build.canBuildShip(edgeId);
+    // }
+
+    // placeShip(edgeId) {
+    //     return this.build.placeShip(edgeId);
+    // }
+
+    // getBuildableShips() {
+    //     return this.build.getBuildableShips();
+    // }
+
     // TurnManager.js
 
     endTurn() {
@@ -199,6 +222,10 @@ class Game {
 
     moveRobber(tileId) {
         return this.robber.moveRobber(tileId);
+    }
+
+    movePirate(tileId) {
+        return this.robber.movePirate(tileId);
     }
 
     stealResource(victimId) {
@@ -313,7 +340,14 @@ class Game {
     }
 
     regenerateBoard() {
-        this.board = generateBoard(this.boardLayout, { isReroll: true });
+        if (this.config.expansions.seafarers) {
+            // if seafarers enabled
+            this.generateSeafarersBoard(SEAFARERS_MAPS[this.config.seafarers.map]);
+        } else {
+            // if base game
+            this.board = generateBoard(this.boardLayout, { isReroll: true });
+        }
+
         this.robber.initializeRobber();
     }
 
@@ -396,6 +430,50 @@ class Game {
         }
 
         return null;
+    }
+
+    // seafarers
+
+    generateSeafarersBoard(map) {
+        this.config.seafarers.map = map.id;
+        this.board = generateSeafarersBoard(map);
+        this.robber.initializeRobber();
+    }
+
+    canBuildShip(edgeId) {
+        return this.build.canBuildShip(edgeId);
+    }
+
+    placeShip(edgeId) {
+        return this.build.placeShip(edgeId);
+    }
+
+    getBuildableShips() {
+        return this.build.getBuildableShips();
+    }
+
+    canMoveShip(fromEdgeId, toEdgeId) {
+        return this.build.canMoveShip(
+            fromEdgeId,
+            toEdgeId
+        );
+    }
+
+    getMovableShips() {
+        return this.build.getMovableShips();
+    }
+
+    getShipMoveDestinations(fromEdgeId) {
+        return this.build.getShipMoveDestinations(
+            fromEdgeId
+        );
+    }
+
+    moveShip(fromEdgeId, toEdgeId) {
+        return this.build.moveShip(
+            fromEdgeId,
+            toEdgeId
+        );
     }
 
 }

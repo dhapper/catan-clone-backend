@@ -1,5 +1,6 @@
 const express = require("express");
 const { emitAchievementSound } = require("../services/SoundManager");
+const getGameState = require("../utils/gameState");
 
 const router = express.Router();
 
@@ -8,34 +9,10 @@ function createGameRoutes(games, io) {
     // const game = games.get("ABCD");
 
     function broadcastGameState(game) {
-        io.to(`lobby:${game.lobbyCode}`).emit("game:state", {
-            lobbyCode: game.lobbyCode,
-            players: [...game.players.values()],
-            colors: game.colors,
-            phase: game.phase,
-            subphase: game.subphase,
-            currentTrade: game.currentTrade,
-            currentPlayerId: game.currentPlayerId,
-            diceRoll: game.diceRoll,
-            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder,
-            bank: game.bank.resources,
-            buildAvailability: game.currentPlayerId
-                ? game.getBuildAvailability(game.currentPlayerId)
-                : null,
-            discardRequirements: Object.fromEntries(game.discardRequirements),
-            robberTileId: game.robberTileId,
-            robberVictims: game.robberVictims,
-            robberSafetyNumber: game.robberSafetyNumber,
-            bankResourceCount: game.bankResourceCount,
-            victoryPointsNeeded: game.victoryPointsNeeded,
-            pieceLimits: game.pieceLimits,
-            boardLayout: game.boardLayout,
-            winner: game.winner,
-            ports: game.board.ports,
-            turnEndsAt: game.timer.turnEndsAt,
-            turnLog: game.turnLog.entries
-        });
+        io.to(`lobby:${game.lobbyCode}`).emit(
+            "game:state",
+            getGameState(game)
+        );
     }
 
     router.get("/game/:lobbyCode", (req, res) => {
@@ -56,6 +33,7 @@ function createGameRoutes(games, io) {
             players: [...game.players.values()],
             currentPlayerId: game.currentPlayerId,
             buildableRoads: game.getBuildableRoads(),
+            buildableShips: game.getBuildableShips(),
             buildableSettlements: game.getBuildableSettlements(),
             buildableCities: game.getBuildableCities(),
             tiles: [...game.board.tiles.values()],
@@ -149,6 +127,30 @@ function createGameRoutes(games, io) {
             success: true,
             edge
         });
+    });
+
+    router.post("/game/:lobbyCode/build/ship", (req, res) => {
+        const game = games.get(req.params.lobbyCode);
+
+        if (!game) {
+            return res.status(404).json({
+                error: "Game not found"
+            });
+        }
+
+        const { edgeId } = req.body;
+
+        const result = game.placeShip(edgeId);
+
+        if (!result.success) {
+            return res.status(400).json({
+                error: "Cannot build ship"
+            });
+        }
+
+        broadcastGameState(game);
+
+        return res.json(result);
     });
 
     router.post("/game/:lobbyCode/reset", (req, res) => {

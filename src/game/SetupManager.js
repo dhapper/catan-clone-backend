@@ -15,6 +15,7 @@ class SetupManager {
         for (const player of players) {
             player.pieces = {
                 road: this.game.pieceLimits.road,
+                ship: this.game.pieceLimits.ship,
                 settlement: this.game.pieceLimits.settlement,
                 city: this.game.pieceLimits.city
             };

@@ -1,5 +1,6 @@
 const STRUCTURE_TYPES = {
     ROAD: "road",
+    SHIP: "ship",
     SETTLEMENT: "settlement",
     CITY: "city",
     DEVELOPMENT_CARD: "developmentCard"
@@ -32,6 +33,11 @@ const BUILD_COSTS = {
         wheat: 1,
         sheep: 1,
         ore: 1
+    },
+
+    [STRUCTURE_TYPES.SHIP]: {
+        wood: 1,
+        sheep: 1
     }
 };
 

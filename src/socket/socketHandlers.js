@@ -1,5 +1,7 @@
 const Player = require("../game/Player");
 const Game = require("../game/Game");
+const getGameState = require("../utils/gameState");
+
 const {
     GAME_PHASES,
     SETUP_SUBPHASES,
@@ -10,38 +12,19 @@ const {
     emitAchievementSound
 } = require("../services/SoundManager");
 
+const {
+    SEAFARERS_MAPS
+} = require("../constants/SeafarersConstants");
+
 function registerSocketHandlers(io, games) {
     function broadcastGameState(game) {
 
         game.timer.check(io, broadcastGameState);
 
-        io.to(`lobby:${game.lobbyCode}`).emit("game:state", {
-            lobbyCode: game.lobbyCode,
-            players: [...game.players.values()],
-            colors: game.colors,
-            phase: game.phase,
-            subphase: game.subphase,
-            currentTrade: game.currentTrade,
-            currentPlayerId: game.currentPlayerId,
-            diceRoll: game.diceRoll,
-            turnOrderRolls: Object.fromEntries(game.turnOrderRolls),
-            setupTurnOrder: game.setupTurnOrder,
-            bank: game.bank.resources,
-            buildAvailability: game.currentPlayerId ? game.getBuildAvailability(game.currentPlayerId) : null,
-            discardRequirements: Object.fromEntries(game.discardRequirements),
-            robberTileId: game.robberTileId,
-            robberVictims: game.robberVictims,
-            robberSafetyNumber: game.robberSafetyNumber,
-            bankResourceCount: game.bankResourceCount,
-            victoryPointsNeeded: game.victoryPointsNeeded,
-            boardLayout: game.boardLayout,
-            pieceLimits: game.pieceLimits,
-            winner: game.winner,
-            turnEndsAt: game.timer.turnEndsAt,
-            timerPaused: game.timer.timerPaused,
-            timerRemainingMs: game.timer.timerRemainingMs,
-            turnLog: game.turnLog.entries
-        });
+        io.to(`lobby:${game.lobbyCode}`).emit(
+            "game:state",
+            getGameState(game)
+        );
     }
 
     io.on("connection", (socket) => {
@@ -377,7 +360,7 @@ function registerSocketHandlers(io, games) {
 
         socket.on("game:rollForTurnOrder", () => {
             if (!socket.playerId) {
-                return;s
+                return; s
             }
 
             if (game.phase !== GAME_PHASES.SETUP) {
@@ -841,6 +824,118 @@ function registerSocketHandlers(io, games) {
 
         socket.on("game:setPieceLimit", ({ piece, value }) => {
             game.setPieceLimit(piece, value);
+            broadcastGameState(game);
+        });
+
+        // seafarers
+
+        socket.on("game:setExpansion", ({ expansion, enabled }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            const player = game.players.get(socket.playerId);
+
+            if (!player || !player.isHost) {
+                return;
+            }
+
+            game.config.expansions[expansion] = enabled;
+
+            if (expansion === "seafarers" && enabled) {
+                game.generateSeafarersBoard(SEAFARERS_MAPS.HEADING_FOR_NEW_SHORES);
+            }
+
+            if (expansion === "seafarers" && !enabled) {
+                game.setBoardLayout([3, 4, 5, 4, 3]);
+            }
+
+            broadcastGameState(game);
+        });
+
+        socket.on("game:setSeafarersMap", ({ map }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            const player = game.players.get(socket.playerId);
+
+            if (!player || !player.isHost) {
+                return;
+            }
+
+            if (!game.config.expansions.seafarers) {
+                return;
+            }
+
+            if (!SEAFARERS_MAPS[map]) {
+                return;
+            }
+
+            game.generateSeafarersBoard(
+                SEAFARERS_MAPS[map]
+            );
+
+            broadcastGameState(game);
+        });
+
+        socket.on("game:movePirate", ({ tileId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            if (!game.movePirate(tileId)) {
+                console.log("PIRATE MOVE REJECTED");
+                return;
+            }
+
+            console.log(
+                "PIRATE MOVED:",
+                socket.playerId,
+                tileId
+            );
+
+            io.to(`lobby:${game.lobbyCode}`).emit("game:sound", "place");
+
+            broadcastGameState(game);
+        });
+
+        socket.on("game:moveShip", ({ fromEdgeId, toEdgeId }) => {
+            if (!socket.playerId) {
+                return;
+            }
+
+            if (game.currentPlayerId !== socket.playerId) {
+                return;
+            }
+
+            const result = game.moveShip(
+                fromEdgeId,
+                toEdgeId
+            );
+
+            if (!result || !result.success) {
+                console.log("SHIP MOVE REJECTED");
+                return;
+            }
+
+            console.log(
+                "SHIP MOVED:",
+                socket.playerId,
+                fromEdgeId,
+                "->",
+                toEdgeId
+            );
+
+            io.to(`lobby:${game.lobbyCode}`).emit(
+                "game:sound",
+                "place"
+            );
+
             broadcastGameState(game);
         });
 
